@@ -1,21 +1,31 @@
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
+
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
-// ルート読み込み
-const waterlevelRoutes = require("./routes/waterlevel");
-const healthRoutes = require("./routes/health");
+// Pythonが書き込むJSONファイル
+const CACHE_FILE = path.join(__dirname, "python", "waterlevel_cache.json");
 
-// トップ確認用
-app.get("/", (req, res) => {
-  res.send("River Monitor Server is running!");
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
 });
 
-// ルーティング分離
-app.use("/waterlevel", waterlevelRoutes);
-app.use("/health", healthRoutes);
+app.get("/waterlevel", (req, res) => {
+  try {
+    if (fs.existsSync(CACHE_FILE)) {
+      const data = fs.readFileSync(CACHE_FILE, "utf-8");
+      res.setHeader("Content-Type", "application/json");
+      res.send(data);
+    } else {
+      res.json({ error: "No water level data yet" });
+    }
+  } catch (err) {
+    res.json({ error: err.message });
+  }
+});
 
-// サーバー起動
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
 });
