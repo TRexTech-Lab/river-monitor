@@ -6,14 +6,7 @@ app.get("/", (req, res) => {
   res.send("River Monitor Server is running!");
 });
 
-app.get("/waterlevel", (req, res) => {
-  res.json({
-    river: "Sample River",
-    level: 2.34,
-    unit: "m",
-    status: "normal"
-  });
-});
+app.use("/waterlevel", waterlevelRoutes);
 
 app.get("/health", (req, res) => {
   res.status(200).json({
