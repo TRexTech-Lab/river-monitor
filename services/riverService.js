@@ -122,8 +122,32 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2, ob
       function drawCharts(l1,d1,l2,d2){
         if(chart1) chart1.destroy();
         if(chart2) chart2.destroy();
-        chart1 = new Chart(document.getElementById('chart1'), { type:'line', data:{ labels:l1, datasets:[{label:'Water Level (m)', data:d1, borderWidth:2, tension:0.2 }] }, options:{ responsive:true, maintainAspectRatio:false } });
-        chart2 = new Chart(document.getElementById('chart2'), { type:'line', data:{ labels:l2, datasets:[{label:'Water Level (m)', data:d2, borderWidth:2, tension:0.2 }] }, options:{ responsive:true, maintainAspectRatio:false } });
+        chart1 = new Chart(document.getElementById('chart1'), {
+          type:'line',
+          data:{
+            labels:l1,
+            datasets:[{label:'Water Level (m)', 
+            data:d1, 
+            borderWidth:2, 
+            tension:0.2,
+            spanGaps: false
+            }]
+          }, options:{ responsive:true, maintainAspectRatio:false } 
+        });
+            
+        chart2 = new Chart(document.getElementById('chart2'), {
+          type:'line', 
+          data:{ 
+            labels:l2,
+            datasets:[{label:'Water Level (m)',
+            data:d2,
+            borderWidth:2,
+            tension:0.2,
+            spanGaps: false
+            }]
+          },
+          options:{ responsive:true, maintainAspectRatio:false } 
+        });
       }
 
       document.getElementById('obsSelect').addEventListener('change', async (e)=>{
