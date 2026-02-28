@@ -1,11 +1,13 @@
 const axios = require("axios");
 
+// --- 現在時刻取得 ---
 async function getCurrentTime() {
   const TIME_URL = "https://www.river.go.jp/kawabou/file/system/tmCrntTime.json";
   const res = await axios.get(TIME_URL);
   return res.data.obsValue?.obsTime || res.data.crntObsTime;
 }
 
+// --- 現在の水位（10分間隔） ---
 async function getCurrentWaterLevel10min(obsId) {
   try {
     const currentTime = await getCurrentTime();
@@ -16,7 +18,7 @@ async function getCurrentWaterLevel10min(obsId) {
     const values = res.data.min10Values || [];
     return {
       labels: values.map(v => v.obsTime || ""),
-      data: values.map(v => v.stg != null ? v.stg : null)
+      data: values.map(v => v.stg != null ? v.stg : null) // nullで欠損表示
     };
   } catch (err) {
     console.error(err);
@@ -24,6 +26,7 @@ async function getCurrentWaterLevel10min(obsId) {
   }
 }
 
+// --- 現在の水位（時間間隔） ---
 async function getCurrentWaterLevelHour(obsId) {
   try {
     const currentTime = await getCurrentTime();
@@ -42,30 +45,39 @@ async function getCurrentWaterLevelHour(obsId) {
   }
 }
 
+// --- 過去7日分データ ---
 async function getWeekData(obsId) {
   const today = new Date();
   const allValues = [];
   for (let i = 0; i < 7; i++) {
-    const d = new Date(today); d.setDate(today.getDate() - i);
-    const yyyy = d.getFullYear(), mm = String(d.getMonth()+1).padStart(2,"0"), dd = String(d.getDate()).padStart(2,"0");
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
     const dateStr = `${yyyy}${mm}${dd}`;
     const url = `https://www.river.go.jp/kawabou/file/files/tmlist/past/stg/${dateStr}/${obsId}.json`;
-    try { const res = await axios.get(url); allValues.push(...(res.data.pastValues||[])); } catch {}
+    try {
+      const res = await axios.get(url);
+      allValues.push(...(res.data.pastValues || []));
+    } catch {}
   }
-  
+
+  // 日付順にソート
   const filtered = allValues
     .sort((a, b) =>
-      (a.date.replaceAll("/","") + a.time.replace(":",""))
-      .localeCompare(b.date.replaceAll("/","") + b.time.replace(":",""))
+      (a.date.replaceAll("/", "") + a.time.replace(":", ""))
+        .localeCompare(b.date.replaceAll("/", "") + b.time.replace(":", ""))
     );
-    
+
   return {
-    labels: filtered.map(v => v.obsTime || ""),   // obsTime がなければ空文字
-    data: filtered.map(v => v.stg != null ? v.stg : null)  // stg がなければ null
+    labels: filtered.map(v => v.obsTime || ""),
+    data: filtered.map(v => v.stg != null ? v.stg : null)
   };
 }
 
-function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2, obsId){
+// --- 両方のグラフ表示（HTML） ---
+function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2, obsId) {
   return `
   <html>
   <head>
@@ -90,7 +102,7 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2, ob
       <option value="0358500400002" ${obsId==="0358500400002"?"selected":""}>相模川・上依知</option>
       <option value="2128900400031" ${obsId==="2128900400031"?"selected":""}>利根川・前橋</option>
       <option value="2126100400019" ${obsId==="2126100400019"?"selected":""}>鬼怒川・宝積寺(下)</option>
-      <option value="2127100400010" ${obsId==="2209700400001"?"selected":""}>中川・黒羽</option>
+      <option value="2127100400010" ${obsId==="2127100400010"?"selected":""}>中川・黒羽</option>
       <option value="0128100400011" ${obsId==="0128100400011"?"selected":""}>阿仁川・米内沢</option>
     </select>
 
@@ -101,6 +113,7 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2, ob
 
     <script>
       let chart1, chart2;
+
       async function fetchBothData(obsId){
         const res = await fetch('/both?obsId=' + obsId + '&json=1');
         return await res.json();
