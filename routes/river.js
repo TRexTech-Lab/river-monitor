@@ -37,7 +37,7 @@ router.get("/both", async (req, res) => {
     const week = await riverService.getWeekData(obsId);
 
     if (req.query.json) {
-      res.json({ current, week });  // JSONで返す
+      res.json({ current, week }); // JSONで返す
     } else {
       res.send(riverService.buildDoubleChartHtml(
         "Current Water Level",
