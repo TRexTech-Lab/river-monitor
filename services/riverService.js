@@ -52,8 +52,8 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2, ob
   <body>
     <label for="obsSelect">観測ポイントを選択:</label>
     <select id="obsSelect">
-      <option value="2155500400010" ${obsId==="2155500400010"?"selected":""}>Sample River</option>
-      <option value="2155500400020" ${obsId==="2155500400020"?"selected":""}>Another River</option>
+      <option value="2155500400010" ${obsId==="神通川・空港前"?"selected":""}>Sample River</option>
+      <option value="2209700400001" ${obsId==="九頭竜川・五松橋"?"selected":""}>Another River</option>
     </select>
 
     <h2>${title1}</h2>
