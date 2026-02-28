@@ -17,7 +17,7 @@ async function getCurrentWaterLevel() {
   const dataUrl =
     `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${OBS_ID}.json`;
 
-  const response = await axios.get(dataUrl);
+  const dataRes = await axios.get(dataUrl);
   const values = dataRes.data.min10Values.filter(v => v.stg !== null);
 
   const labels = values.map(v => v.obsTime).reverse();
