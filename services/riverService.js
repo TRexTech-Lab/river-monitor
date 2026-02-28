@@ -17,8 +17,26 @@ async function getCurrentWaterLevel() {
   const dataUrl =
     `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${OBS_ID}.json`;
 
-  const dataRes = await axios.get(dataUrl);
-  return dataRes.data;
+  try {
+      const response = await axios.get(url);
+      allValues.push(...response.data);
+    } catch {
+      console.log("skip:", dateStr);
+    }
+  }
+
+  const filtered = allValues
+    .filter(v => v.stg != null)
+    .sort((a, b) => {
+      const keyA = a.date.replaceAll("/", "") + a.time.replace(":", "");
+      const keyB = b.date.replaceAll("/", "") + b.time.replace(":", "");
+      return keyA.localeCompare(keyB);
+    });
+
+  return {
+    labels: filtered.map(v => v.obsTime),
+    data: filtered.map(v => v.stg)
+  };
 }
 
 async function getWeekData() {
