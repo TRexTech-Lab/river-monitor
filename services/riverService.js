@@ -104,7 +104,7 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2, ob
       document.getElementById('obsSelect').addEventListener('change', async (e)=>{
         const obs = e.target.value;
         const json = await fetchBothData(obs);
-        drawCharts(json.current.labels, json.current.data, json.week.labels, json.week.data);
+        drawCharts(json.current10min.labels, json.current10min.data, json.week.labels, json.week.data);
       });
 
       // 初期描画
