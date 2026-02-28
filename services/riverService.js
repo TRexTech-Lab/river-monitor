@@ -10,7 +10,6 @@ async function getCurrentTime() {
 
 async function getCurrentWaterLevel() {
   const currentTime = await getCurrentTime();
-  const allValues = [];
 
   const date = currentTime.slice(0, 10).replaceAll("/", "");
   const time = currentTime.slice(11, 16).replace(":", "");
@@ -18,24 +17,15 @@ async function getCurrentWaterLevel() {
   const dataUrl =
     `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${OBS_ID}.json`;
 
-  try {
-    const response = await axios.get(dataUrl);
-    allValues.push(...response.data);
-  } catch (err) {
-    console.log("skip:", date);
-  }
+  const response = await axios.get(dataUrl);
 
-  const filtered = allValues
-    .filter(v => v.stg != null)
-    .sort((a, b) => {
-      const keyA = a.date.replaceAll("/", "") + a.time.replace(":", "");
-      const keyB = b.date.replaceAll("/", "") + b.time.replace(":", "");
-      return keyA.localeCompare(keyB);
-    });
+  console.log(response.data);
+
+  const values = response.data.values || response.data;
 
   return {
-    labels: filtered.map(v => v.obsTime),
-    data: filtered.map(v => v.stg)
+    labels: values.map(v => v.obsTime),
+    data: values.map(v => v.stg)
   };
 }
 
