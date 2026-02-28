@@ -44,17 +44,20 @@ router.get("/week", async (req, res) => {
 router.get("/both", async (req, res) => {
   const obsId = req.query.obsId || "2155500400010";
   try {
-    const current10min = await riverService.getCurrentWaterLevel10min(obsId);
-    const week = await riverService.getWeekData(obsId);
+    const [current10min, currentHour, week] = await Promise.all([
+      riverService.getCurrentWaterLevel10min(obsId),
+      riverService.getCurrentWaterLevelHour(obsId),
+      riverService.getWeekData(obsId)
+    ]);
 
     if (req.query.json) {
       res.json({ current10min, week }); // JSONで返す
     } else {
       res.send(riverService.buildDoubleChartHtml(
-        "Current Water Level",
         current10min.labels,
         current10min.data,
-        "Past Week Water Level",
+        currentHour.labels,
+        currentHour.data,
         week.labels,
         week.data,
         obsId
