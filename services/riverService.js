@@ -1,13 +1,13 @@
 const axios = require("axios");
 
-// --- 時刻取得 ---
+// --- 現在時刻取得 ---
 async function getCurrentTime() {
   const TIME_URL = "https://www.river.go.jp/kawabou/file/system/tmCrntTime.json";
   const res = await axios.get(TIME_URL);
   return res.data.obsValue?.obsTime || res.data.crntObsTime;
 }
 
-// --- 現在水位（10分ごと） ---
+// --- 10分ごとの水位 ---
 async function getCurrentWaterLevel10min(obsId) {
   try {
     const currentTime = await getCurrentTime();
@@ -23,7 +23,7 @@ async function getCurrentWaterLevel10min(obsId) {
   }
 }
 
-// --- 現在水位（1時間ごと） ---
+// --- 1時間ごとの水位 ---
 async function getCurrentWaterLevelHour(obsId) {
   try {
     const currentTime = await getCurrentTime();
@@ -55,12 +55,12 @@ async function getWeekData(obsId) {
   }
   const filtered = allValues
     .map(v => ({ obsTime: v.obsTime, stg: v.stg !== null ? v.stg : null }))
-    .sort((a,b)=> (a.obsTime).localeCompare(b.obsTime));
+    .sort((a,b)=> a.obsTime.localeCompare(b.obsTime));
   return { labels: filtered.map(v=>v.obsTime), data: filtered.map(v=>v.stg) };
 }
 
-// --- モダン両方グラフ（線途切れ対応） ---
-function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2, obsId){
+// --- 3枚グラフ表示 HTML ---
+function buildTripleChartHtml(labels10min, data10min, labelsHour, dataHour, labelsWeek, dataWeek, obsId){
   return `
   <html>
   <head>
@@ -89,44 +89,55 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2, ob
       <option value="0128100400011" ${obsId==="0128100400011"?"selected":""}>阿仁川・米内沢</option>
     </select>
 
-    <h2>${title1}</h2>
-    <div class="chart-container"><canvas id="chart1"></canvas></div>
-    <h2>${title2}</h2>
-    <div class="chart-container"><canvas id="chart2"></canvas></div>
+    <h2>Current Water Level (10min)</h2>
+    <div class="chart-container"><canvas id="chart10min"></canvas></div>
+
+    <h2>Current Water Level (Hour)</h2>
+    <div class="chart-container"><canvas id="chartHour"></canvas></div>
+
+    <h2>Past Week Water Level</h2>
+    <div class="chart-container"><canvas id="chartWeek"></canvas></div>
 
     <script>
-      let chart1, chart2;
+      let chart10min, chartHour, chartWeek;
 
-      async function fetchBothData(obsId){
+      async function fetchAllData(obsId){
         const res = await fetch('/both?obsId=' + obsId + '&json=1');
         return await res.json();
       }
 
-      function drawCharts(l1,d1,l2,d2){
-        if(chart1) chart1.destroy();
-        if(chart2) chart2.destroy();
+      function drawCharts(l10,d10,lH,dH,lW,dW){
+        if(chart10min) chart10min.destroy();
+        if(chartHour) chartHour.destroy();
+        if(chartWeek) chartWeek.destroy();
 
-        chart1 = new Chart(document.getElementById('chart1'), {
+        chart10min = new Chart(document.getElementById('chart10min'), {
           type:'line',
-          data:{ labels:l1, datasets:[{ label:'Water Level (m)', data:d1, borderWidth:2, tension:0.2, spanGaps:false }] },
+          data:{ labels:l10, datasets:[{ label:'Water Level (m)', data:d10, borderWidth:2, tension:0.2, spanGaps:false }] },
           options:{ responsive:true, maintainAspectRatio:false }
         });
 
-        chart2 = new Chart(document.getElementById('chart2'), {
+        chartHour = new Chart(document.getElementById('chartHour'), {
           type:'line',
-          data:{ labels:l2, datasets:[{ label:'Water Level (m)', data:d2, borderWidth:2, tension:0.2, spanGaps:false }] },
+          data:{ labels:lH, datasets:[{ label:'Water Level (m)', data:dH, borderWidth:2, tension:0.2, spanGaps:false }] },
+          options:{ responsive:true, maintainAspectRatio:false }
+        });
+
+        chartWeek = new Chart(document.getElementById('chartWeek'), {
+          type:'line',
+          data:{ labels:lW, datasets:[{ label:'Water Level (m)', data:dW, borderWidth:2, tension:0.2, spanGaps:false }] },
           options:{ responsive:true, maintainAspectRatio:false }
         });
       }
 
       document.getElementById('obsSelect').addEventListener('change', async (e)=>{
         const obs = e.target.value;
-        const json = await fetchBothData(obs);
-        drawCharts(json.current10min.labels, json.current10min.data, json.week.labels, json.week.data);
+        const json = await fetchAllData(obs);
+        drawCharts(json.current10min.labels, json.current10min.data, json.currentHour.labels, json.currentHour.data, json.week.labels, json.week.data);
       });
 
       // 初期描画
-      drawCharts(${JSON.stringify(labels1)}, ${JSON.stringify(data1)}, ${JSON.stringify(labels2)}, ${JSON.stringify(data2)});
+      drawCharts(${JSON.stringify(labels10min)}, ${JSON.stringify(data10min)}, ${JSON.stringify(labelsHour)}, ${JSON.stringify(dataHour)}, ${JSON.stringify(labelsWeek)}, ${JSON.stringify(dataWeek)});
     </script>
   </body>
   </html>
@@ -137,5 +148,5 @@ module.exports = {
   getCurrentWaterLevel10min,
   getCurrentWaterLevelHour,
   getWeekData,
-  buildDoubleChartHtml
+  buildTripleChartHtml
 };
