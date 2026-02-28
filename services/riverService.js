@@ -124,9 +124,9 @@ function buildTripleChartHtml(title10min, labels10min, data10min,
       });
 
       // 初期描画
-      drawCharts(${JSON.stringify(title10min)}, ${JSON.stringify(data10min)},
-                 ${JSON.stringify(titleHour)}, ${JSON.stringify(dataHour)},
-                 ${JSON.stringify(titleWeek)}, ${JSON.stringify(dataWeek)});
+      drawCharts(${JSON.stringify(labels10min)}, ${JSON.stringify(data10min)},
+                 ${JSON.stringify(labelsHour)}, ${JSON.stringify(dataHour)},
+                 ${JSON.stringify(labelsWeek)}, ${JSON.stringify(dataWeek)});
     </script>
   </body>
   </html>
