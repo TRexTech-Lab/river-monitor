@@ -24,4 +24,21 @@ router.get("/week", async (req, res) => {
   }
 });
 
+router.get("/both", async (req, res) => {
+  try {
+    const current = await getCurrentWaterLevel();
+    const week = await getWeekData();
+
+    res.send(
+      buildDoubleChartHtml(
+        "Current Water Level", current.labels, current.data,
+        "Past Week Water Level", week.labels, week.data
+      )
+    );
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error fetching water level data");
+  }
+});
+
 module.exports = router;
