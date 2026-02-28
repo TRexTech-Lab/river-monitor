@@ -108,8 +108,8 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2) {
             margin: 20px auto;
           }
           canvas {
-            width: 100% !important;
-            height: 100% !important;
+            width: 100%;
+            height: 100%;
           }
         </style>
       </head>
