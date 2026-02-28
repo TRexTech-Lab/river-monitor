@@ -94,6 +94,7 @@ function buildChartHtml(title, labels, data) {
   `;
 }
 
+
 function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2) {
   return `
     <html>
@@ -101,7 +102,7 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2) {
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <style>
           body { font-family: sans-serif; text-align: center; }
-          h2 { font-size: 18px; margin: 20px 0 10px; } /* 小さめに調整 */
+          h2 { font-size: 18px; margin: 20px 0 10px; }
           canvas { display: block; margin: 0 auto 40px; max-width: 90%; height: 400px; }
         </style>
       </head>
@@ -111,8 +112,7 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2) {
         <h2>${title2}</h2>
         <canvas id="chart2"></canvas>
         <script>
-          const ctx1 = document.getElementById('chart1');
-          new Chart(ctx1, {
+          new Chart(document.getElementById('chart1'), {
             type: 'line',
             data: {
               labels: ${JSON.stringify(labels1)},
@@ -123,14 +123,10 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2) {
                 tension: 0.2
               }]
             },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false
-            }
+            options: { responsive: true, maintainAspectRatio: false }
           });
 
-          const ctx2 = document.getElementById('chart2');
-          new Chart(ctx2, {
+          new Chart(document.getElementById('chart2'), {
             type: 'line',
             data: {
               labels: ${JSON.stringify(labels2)},
@@ -141,10 +137,7 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2) {
                 tension: 0.2
               }]
             },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false
-            }
+            options: { responsive: true, maintainAspectRatio: false }
           });
         </script>
       </body>
