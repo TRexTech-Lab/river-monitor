@@ -93,3 +93,73 @@ app.get("/graph", async (req, res) => {
   }
 });
 
+
+app.get("/weekgraph", async (req, res) => {
+  try {
+    const today = new Date();
+    const allValues = [];
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+
+      const dateStr = `${yyyy}${mm}${dd}`;
+
+      const url = `https://www.river.go.jp/kawabou/file/files/tmlist/past/stg/${dateStr}/${OBS_ID}.json`;
+
+      try {
+        const response = await axios.get(url);
+        allValues.push(...response.data);
+      } catch (err) {
+        console.log("skip:", dateStr);
+      }
+    }
+
+    const filtered = allValues
+      .filter(v => v.stg !== null)
+      .sort((a, b) => new Date(a.obsTime) - new Date(b.obsTime));
+
+    const labels = filtered.map(v => v.obsTime);
+    const data = filtered.map(v => v.stg);
+
+    res.send(`
+      <html>
+      <head>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+      </head>
+      <body>
+        <h2>Past 7 Days Water Level</h2>
+        <canvas id="chart"></canvas>
+        <script>
+          new Chart(document.getElementById('chart'), {
+            type: 'line',
+            data: {
+              labels: ${JSON.stringify(labels)},
+              datasets: [{
+                label: 'Water Level (m)',
+                data: ${JSON.stringify(data)},
+                borderWidth: 2,
+                tension: 0.2
+              }]
+            },
+            options: {
+              scales: {
+                x: {
+                  ticks: { maxTicksLimit: 20 }
+                }
+              }
+            }
+          });
+        </script>
+      </body>
+      </html>
+    `);
+
+  } catch (err) {
+    res.send("Error: " + err.message);
+  }
+});
