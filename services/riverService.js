@@ -94,6 +94,54 @@ function buildChartHtml(title, labels, data) {
   `;
 }
 
+function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2) {
+  return `
+    <html>
+      <head>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+          canvas { display: block; margin: 20px auto; max-width: 800px; }
+        </style>
+      </head>
+      <body>
+        <h2>${title1}</h2>
+        <canvas id="chart1"></canvas>
+        <h2>${title2}</h2>
+        <canvas id="chart2"></canvas>
+        <script>
+          const ctx1 = document.getElementById('chart1');
+          new Chart(ctx1, {
+            type: 'line',
+            data: {
+              labels: ${JSON.stringify(labels1)},
+              datasets: [{
+                label: 'Water Level (m)',
+                data: ${JSON.stringify(data1)},
+                borderWidth: 2,
+                tension: 0.2
+              }]
+            }
+          });
+
+          const ctx2 = document.getElementById('chart2');
+          new Chart(ctx2, {
+            type: 'line',
+            data: {
+              labels: ${JSON.stringify(labels2)},
+              datasets: [{
+                label: 'Water Level (m)',
+                data: ${JSON.stringify(data2)},
+                borderWidth: 2,
+                tension: 0.2
+              }]
+            }
+          });
+        </script>
+      </body>
+    </html>
+  `;
+}
+
 module.exports = {
   getCurrentWaterLevel,
   getWeekData,
