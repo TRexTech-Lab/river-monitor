@@ -1,6 +1,6 @@
 const axios = require("axios");
 
-// --- 時刻取得 ---
+// --- 現在時刻取得 ---
 async function getCurrentTime() {
   const TIME_URL = "https://www.river.go.jp/kawabou/file/system/tmCrntTime.json";
   const res = await axios.get(TIME_URL);
@@ -11,12 +11,18 @@ async function getCurrentTime() {
 async function getCurrentWaterLevel10min(obsId) {
   try {
     const currentTime = await getCurrentTime();
-    const date = currentTime.slice(0,10).replaceAll("/","");
-    const time = currentTime.slice(11,16).replace(":","");
+    const date = currentTime.slice(0, 10).replaceAll("/", "");
+    const time = currentTime.slice(11, 16).replace(":", "");
     const url = `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${obsId}.json`;
     const res = await axios.get(url);
-    const values = (res.data.min10Values||[]).map(v=>v.stg===null?null:v.stg);
-    return { labels: (res.data.min10Values||[]).map(v=>v.obsTime).reverse(), data: values.reverse() };
+    const values = (res.data.min10Values || []).map(v => {
+      if (v.stg === null || v.stg === undefined || v.stg === "" || v.stg === "-") return null;
+      return Number(v.stg);
+    });
+    return {
+      labels: (res.data.min10Values || []).map(v => v.obsTime).reverse(),
+      data: values.reverse()
+    };
   } catch (err) {
     console.error(err);
     return { labels: [], data: [] };
@@ -27,12 +33,18 @@ async function getCurrentWaterLevel10min(obsId) {
 async function getCurrentWaterLevelHour(obsId) {
   try {
     const currentTime = await getCurrentTime();
-    const date = currentTime.slice(0,10).replaceAll("/","");
-    const time = currentTime.slice(11,16).replace(":","");
+    const date = currentTime.slice(0, 10).replaceAll("/", "");
+    const time = currentTime.slice(11, 16).replace(":", "");
     const url = `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${obsId}.json`;
     const res = await axios.get(url);
-    const values = (res.data.hrValues||[]).map(v=>v.stg===null?null:v.stg);
-    return { labels: (res.data.hrValues||[]).map(v=>v.obsTime).reverse(), data: values.reverse() };
+    const values = (res.data.hrValues || []).map(v => {
+      if (v.stg === null || v.stg === undefined || v.stg === "" || v.stg === "-") return null;
+      return Number(v.stg);
+    });
+    return {
+      labels: (res.data.hrValues || []).map(v => v.obsTime).reverse(),
+      data: values.reverse()
+    };
   } catch (err) {
     console.error(err);
     return { labels: [], data: [] };
@@ -42,26 +54,43 @@ async function getCurrentWaterLevelHour(obsId) {
 // --- 過去7日分 ---
 async function getWeekData(obsId) {
   const today = new Date();
-  const allValues = [];
-  for(let i=0;i<7;i++){
-    const d = new Date(today); d.setDate(today.getDate()-i);
-    const yyyy=d.getFullYear(), mm=String(d.getMonth()+1).padStart(2,"0"), dd=String(d.getDate()).padStart(2,"0");
+  let allValues = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
     const dateStr = `${yyyy}${mm}${dd}`;
     const url = `https://www.river.go.jp/kawabou/file/files/tmlist/past/stg/${dateStr}/${obsId}.json`;
-    try { const res = await axios.get(url); allValues.push(...(res.data.pastValues||[])); } catch {}
+    try {
+      const res = await axios.get(url);
+      allValues.push(...(res.data.pastValues || []));
+    } catch (err) {
+      console.warn("Week data fetch error:", err.message);
+    }
   }
-  const filtered = allValues.filter(v=>v.stg!=null?true:true).sort((a,b)=>
-    (a.date.replaceAll("/","")+a.time.replace(":","")).localeCompare(b.date.replaceAll("/","")+b.time.replace(":",""))
+
+  // 日付と時間でソート
+  const filtered = allValues.sort((a, b) =>
+    (a.date.replaceAll("/", "") + a.time.replace(":", "")).localeCompare(
+      b.date.replaceAll("/", "") + b.time.replace(":", "")
+    )
   );
-  const data = filtered.map(v=>v.stg===null?null:v.stg);
-  return { labels: filtered.map(v=>v.obsTime), data };
+
+  const data = filtered.map(v => {
+    if (v.stg === null || v.stg === undefined || v.stg === "" || v.stg === "-") return null;
+    return Number(v.stg);
+  });
+
+  return { labels: filtered.map(v => v.obsTime), data };
 }
 
-// --- グラフ描画 HTML ---
+// --- 3枚グラフ描画 HTML ---
 function buildTripleChartHtml(title10min, labels10min, data10min,
                               titleHour, labelsHour, dataHour,
                               titleWeek, labelsWeek, dataWeek,
-                              obsId){
+                              obsId) {
   return `
   <html>
   <head>
@@ -104,9 +133,24 @@ function buildTripleChartHtml(title10min, labels10min, data10min,
         if(chart10min) chart10min.destroy();
         if(chartHour) chartHour.destroy();
         if(chartWeek) chartWeek.destroy();
-        chart10min = new Chart(document.getElementById('chart10min'), { type:'line', data:{ labels:l10, datasets:[{label:'Water Level (m)', data:d10, borderWidth:2, spanGaps:false, tension:0.2}]}, options:{ responsive:true, maintainAspectRatio:false }});
-        chartHour = new Chart(document.getElementById('chartHour'), { type:'line', data:{ labels:lHr, datasets:[{label:'Water Level (m)', data:dHr, borderWidth:2, spanGaps:false, tension:0.2}]}, options:{ responsive:true, maintainAspectRatio:false }});
-        chartWeek = new Chart(document.getElementById('chartWeek'), { type:'line', data:{ labels:lW, datasets:[{label:'Water Level (m)', data:dW, borderWidth:2, spanGaps:false, tension:0.2}]}, options:{ responsive:true, maintainAspectRatio:false }});
+
+        chart10min = new Chart(document.getElementById('chart10min'), {
+          type:'line',
+          data:{ labels:l10, datasets:[{label:'Water Level (10min) (m)', data:d10, borderWidth:2, spanGaps:false, tension:0.2}]},
+          options:{ responsive:true, maintainAspectRatio:false }
+        });
+
+        chartHour = new Chart(document.getElementById('chartHour'), {
+          type:'line',
+          data:{ labels:lHr, datasets:[{label:'Water Level (Hour) (m)', data:dHr, borderWidth:2, spanGaps:false, tension:0.2}]},
+          options:{ responsive:true, maintainAspectRatio:false }
+        });
+
+        chartWeek = new Chart(document.getElementById('chartWeek'), {
+          type:'line',
+          data:{ labels:lW, datasets:[{label:'Water Level (Week) (m)', data:dW, borderWidth:2, spanGaps:false, tension:0.2}]},
+          options:{ responsive:true, maintainAspectRatio:false }
+        });
       }
 
       async function fetchAllData(obsId){
@@ -133,7 +177,7 @@ function buildTripleChartHtml(title10min, labels10min, data10min,
   `;
 }
 
-module.exports = { 
+module.exports = {
   getCurrentWaterLevel10min,
   getCurrentWaterLevelHour,
   getWeekData,
