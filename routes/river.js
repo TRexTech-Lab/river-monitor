@@ -29,7 +29,7 @@ router.get("/both", async (req, res) => {
     const current = await　riverService.getCurrentWaterLevel().catch(e => { console.error("current error", e); return {labels: [], data: []}; });
     const week = await riverService.getWeekData().catch(e => { console.error("week error", e); return {labels: [], data: []}; });
     res.send(
-      buildDoubleChartHtml(
+      riverService.buildDoubleChartHtml(
         "Current Water Level", current.labels, current.data,
         "Past Week Water Level", week.labels, week.data
       )
