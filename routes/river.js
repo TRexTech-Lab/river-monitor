@@ -7,11 +7,22 @@ router.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// 現在の水位グラフ（単独）
-router.get("/current", async (req, res) => {
+// 現在の水位グラフ（10min）
+router.get("/current10min", async (req, res) => {
   const obsId = req.query.obsId || "2155500400010";
   try {
-    const { labels, data } = await riverService.getCurrentWaterLevel(obsId);
+    const { labels, data } = await riverService.getCurrentWaterLevel10min(obsId);
+    res.send(riverService.buildChartHtml("Current Water Level", labels, data));
+  } catch (err) {
+    res.status(500).send("Error: " + err.message);
+  }
+});
+
+// 現在の水位グラフ（Hour）
+router.get("/currentHour", async (req, res) => {
+  const obsId = req.query.obsId || "2155500400010";
+  try {
+    const { labels, data } = await riverService.getCurrentWaterLevelHour(obsId);
     res.send(riverService.buildChartHtml("Current Water Level", labels, data));
   } catch (err) {
     res.status(500).send("Error: " + err.message);
@@ -33,7 +44,7 @@ router.get("/week", async (req, res) => {
 router.get("/both", async (req, res) => {
   const obsId = req.query.obsId || "2155500400010";
   try {
-    const current = await riverService.getCurrentWaterLevel(obsId);
+    const current10min = await riverService.getCurrentWaterLevel10min(obsId);
     const week = await riverService.getWeekData(obsId);
 
     if (req.query.json) {
@@ -41,8 +52,8 @@ router.get("/both", async (req, res) => {
     } else {
       res.send(riverService.buildDoubleChartHtml(
         "Current Water Level",
-        current.labels,
-        current.data,
+        current10min.labels,
+        current10min.data,
         "Past Week Water Level",
         week.labels,
         week.data,
