@@ -1,4 +1,4 @@
-onst axios = require("axios");
+const axios = require("axios");
 
 const OBS_ID = "2155500400010";
 const TIME_URL = "https://www.river.go.jp/kawabou/file/system/tmCrntTime.json";
