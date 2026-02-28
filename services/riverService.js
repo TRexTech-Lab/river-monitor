@@ -1,6 +1,6 @@
 const axios = require("axios");
 
-// --- 現在時刻取得 ---
+// --- 時刻取得 ---
 async function getCurrentTime() {
   const TIME_URL = "https://www.river.go.jp/kawabou/file/system/tmCrntTime.json";
   const res = await axios.get(TIME_URL);
@@ -11,12 +11,12 @@ async function getCurrentTime() {
 async function getCurrentWaterLevel10min(obsId) {
   try {
     const currentTime = await getCurrentTime();
-    const date = currentTime.slice(0, 10).replaceAll("/", "");
-    const time = currentTime.slice(11, 16).replace(":", "");
+    const date = currentTime.slice(0,10).replaceAll("/","");
+    const time = currentTime.slice(11,16).replace(":","");
     const url = `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${obsId}.json`;
     const res = await axios.get(url);
-    const values = (res.data.min10Values || []).map(v => ({ obsTime:v.obsTime, stg:v.stg !== null ? v.stg : null }));
-    return { labels: values.map(v => v.obsTime).reverse(), data: values.map(v => v.stg).reverse() };
+    const values = (res.data.min10Values||[]).map(v=>v.stg===null?null:v.stg);
+    return { labels: (res.data.min10Values||[]).map(v=>v.obsTime).reverse(), data: values.reverse() };
   } catch (err) {
     console.error(err);
     return { labels: [], data: [] };
@@ -27,12 +27,12 @@ async function getCurrentWaterLevel10min(obsId) {
 async function getCurrentWaterLevelHour(obsId) {
   try {
     const currentTime = await getCurrentTime();
-    const date = currentTime.slice(0, 10).replaceAll("/", "");
-    const time = currentTime.slice(11, 16).replace(":", "");
+    const date = currentTime.slice(0,10).replaceAll("/","");
+    const time = currentTime.slice(11,16).replace(":","");
     const url = `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${obsId}.json`;
     const res = await axios.get(url);
-    const values = (res.data.hrValues || []).map(v => ({ obsTime:v.obsTime, stg:v.stg !== null ? v.stg : null }));
-    return { labels: values.map(v => v.obsTime).reverse(), data: values.map(v => v.stg).reverse() };
+    const values = (res.data.hrValues||[]).map(v=>v.stg===null?null:v.stg);
+    return { labels: (res.data.hrValues||[]).map(v=>v.obsTime).reverse(), data: values.reverse() };
   } catch (err) {
     console.error(err);
     return { labels: [], data: [] };
@@ -43,24 +43,25 @@ async function getCurrentWaterLevelHour(obsId) {
 async function getWeekData(obsId) {
   const today = new Date();
   const allValues = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(today); d.setDate(today.getDate() - i);
-    const yyyy = d.getFullYear(), mm = String(d.getMonth()+1).padStart(2,"0"), dd = String(d.getDate()).padStart(2,"0");
+  for(let i=0;i<7;i++){
+    const d = new Date(today); d.setDate(today.getDate()-i);
+    const yyyy=d.getFullYear(), mm=String(d.getMonth()+1).padStart(2,"0"), dd=String(d.getDate()).padStart(2,"0");
     const dateStr = `${yyyy}${mm}${dd}`;
     const url = `https://www.river.go.jp/kawabou/file/files/tmlist/past/stg/${dateStr}/${obsId}.json`;
-    try { 
-      const res = await axios.get(url);
-      allValues.push(...(res.data.pastValues||[]));
-    } catch {}
+    try { const res = await axios.get(url); allValues.push(...(res.data.pastValues||[])); } catch {}
   }
-  const filtered = allValues
-    .map(v => ({ obsTime: v.obsTime, stg: v.stg !== null ? v.stg : null }))
-    .sort((a,b)=> a.obsTime.localeCompare(b.obsTime));
-  return { labels: filtered.map(v=>v.obsTime), data: filtered.map(v=>v.stg) };
+  const filtered = allValues.filter(v=>v.stg!=null?true:true).sort((a,b)=>
+    (a.date.replaceAll("/","")+a.time.replace(":","")).localeCompare(b.date.replaceAll("/","")+b.time.replace(":",""))
+  );
+  const data = filtered.map(v=>v.stg===null?null:v.stg);
+  return { labels: filtered.map(v=>v.obsTime), data };
 }
 
-// --- 3枚グラフ表示 HTML ---
-function buildTripleChartHtml(labels10min, data10min, labelsHour, dataHour, labelsWeek, dataWeek, obsId){
+// --- グラフ描画 HTML ---
+function buildTripleChartHtml(title10min, labels10min, data10min,
+                              titleHour, labelsHour, dataHour,
+                              titleWeek, labelsWeek, dataWeek,
+                              obsId){
   return `
   <html>
   <head>
@@ -89,55 +90,43 @@ function buildTripleChartHtml(labels10min, data10min, labelsHour, dataHour, labe
       <option value="0128100400011" ${obsId==="0128100400011"?"selected":""}>阿仁川・米内沢</option>
     </select>
 
-    <h2>Current Water Level (10min)</h2>
+    <h2>${title10min}</h2>
     <div class="chart-container"><canvas id="chart10min"></canvas></div>
-
-    <h2>Current Water Level (Hour)</h2>
+    <h2>${titleHour}</h2>
     <div class="chart-container"><canvas id="chartHour"></canvas></div>
-
-    <h2>Past Week Water Level</h2>
+    <h2>${titleWeek}</h2>
     <div class="chart-container"><canvas id="chartWeek"></canvas></div>
 
     <script>
       let chart10min, chartHour, chartWeek;
 
-      async function fetchAllData(obsId){
-        const res = await fetch('/both?obsId=' + obsId + '&json=1');
-        return await res.json();
-      }
-
-      function drawCharts(l10,d10,lH,dH,lW,dW){
+      function drawCharts(l10,d10,lHr,dHr,lW,dW){
         if(chart10min) chart10min.destroy();
         if(chartHour) chartHour.destroy();
         if(chartWeek) chartWeek.destroy();
+        chart10min = new Chart(document.getElementById('chart10min'), { type:'line', data:{ labels:l10, datasets:[{label:'Water Level (m)', data:d10, borderWidth:2, spanGaps:false, tension:0.2}]}, options:{ responsive:true, maintainAspectRatio:false }});
+        chartHour = new Chart(document.getElementById('chartHour'), { type:'line', data:{ labels:lHr, datasets:[{label:'Water Level (m)', data:dHr, borderWidth:2, spanGaps:false, tension:0.2}]}, options:{ responsive:true, maintainAspectRatio:false }});
+        chartWeek = new Chart(document.getElementById('chartWeek'), { type:'line', data:{ labels:lW, datasets:[{label:'Water Level (m)', data:dW, borderWidth:2, spanGaps:false, tension:0.2}]}, options:{ responsive:true, maintainAspectRatio:false }});
+      }
 
-        chart10min = new Chart(document.getElementById('chart10min'), {
-          type:'line',
-          data:{ labels:l10, datasets:[{ label:'Water Level (m)', data:d10, borderWidth:2, tension:0.2, spanGaps:false }] },
-          options:{ responsive:true, maintainAspectRatio:false }
-        });
-
-        chartHour = new Chart(document.getElementById('chartHour'), {
-          type:'line',
-          data:{ labels:lH, datasets:[{ label:'Water Level (m)', data:dH, borderWidth:2, tension:0.2, spanGaps:false }] },
-          options:{ responsive:true, maintainAspectRatio:false }
-        });
-
-        chartWeek = new Chart(document.getElementById('chartWeek'), {
-          type:'line',
-          data:{ labels:lW, datasets:[{ label:'Water Level (m)', data:dW, borderWidth:2, tension:0.2, spanGaps:false }] },
-          options:{ responsive:true, maintainAspectRatio:false }
-        });
+      async function fetchAllData(obsId){
+        const res = await fetch('/both?obsId='+obsId+'&json=1');
+        const json = await res.json();
+        return { current10min: json.current10min, currentHour: json.currentHour, week: json.week };
       }
 
       document.getElementById('obsSelect').addEventListener('change', async (e)=>{
         const obs = e.target.value;
         const json = await fetchAllData(obs);
-        drawCharts(json.current10min.labels, json.current10min.data, json.currentHour.labels, json.currentHour.data, json.week.labels, json.week.data);
+        drawCharts(json.current10min.labels,json.current10min.data,
+                   json.currentHour.labels,json.currentHour.data,
+                   json.week.labels,json.week.data);
       });
 
       // 初期描画
-      drawCharts(${JSON.stringify(labels10min)}, ${JSON.stringify(data10min)}, ${JSON.stringify(labelsHour)}, ${JSON.stringify(dataHour)}, ${JSON.stringify(labelsWeek)}, ${JSON.stringify(dataWeek)});
+      drawCharts(${JSON.stringify(title10min)}, ${JSON.stringify(data10min)},
+                 ${JSON.stringify(titleHour)}, ${JSON.stringify(dataHour)},
+                 ${JSON.stringify(titleWeek)}, ${JSON.stringify(dataWeek)});
     </script>
   </body>
   </html>
