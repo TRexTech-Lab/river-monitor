@@ -100,8 +100,9 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2) {
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <style>
           body { font-family: sans-serif; text-align: center; }
-          h2 { font-size: 18px; margin: 20px 0 10px; }
-          canvas { display: block; margin: 0 auto 40px; max-width: 90%; height: 400px; }
+          //h2 { font-size: 18px; margin: 20px 0 10px; }
+          //canvas { display: block; margin: 0 auto 40px; max-width: 90%; height: 400px; }
+          canvas { display: block; margin: auto 40px; }
         </style>
       </head>
       <body>
