@@ -13,8 +13,11 @@ async function getCurrentWaterLevel10min(obsId) {
     const time = currentTime.slice(11, 16).replace(":", "");
     const url = `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${obsId}.json`;
     const res = await axios.get(url);
-    const values = (res.data.min10Values || []).filter(v => v.stg !== null);
-    return { labels: values.map(v => v.obsTime).reverse(), data: values.map(v => v.stg).reverse() };
+    const values = res.data.min10Values || [];
+    return {
+      labels: values.map(v => v.obsTime || ""),
+      data: values.map(v => v.stg != null ? v.stg : null)
+    };
   } catch (err) {
     console.error(err);
     return { labels: [], data: [] };
@@ -28,15 +31,16 @@ async function getCurrentWaterLevelHour(obsId) {
     const time = currentTime.slice(11, 16).replace(":", "");
     const url = `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${obsId}.json`;
     const res = await axios.get(url);
-    const values = (res.data.hrValues || []).filter(v => v.stg !== null);
-    return { labels: values.map(v => v.obsTime).reverse(), data: values.map(v => v.stg).reverse() };
+    const values = res.data.hrValues || [];
+    return {
+      labels: values.map(v => v.obsTime || ""),
+      data: values.map(v => v.stg != null ? v.stg : null)
+    };
   } catch (err) {
     console.error(err);
     return { labels: [], data: [] };
   }
 }
-
-
 
 async function getWeekData(obsId) {
   const today = new Date();
@@ -48,9 +52,17 @@ async function getWeekData(obsId) {
     const url = `https://www.river.go.jp/kawabou/file/files/tmlist/past/stg/${dateStr}/${obsId}.json`;
     try { const res = await axios.get(url); allValues.push(...(res.data.pastValues||[])); } catch {}
   }
-  const filtered = allValues.filter(v=>v.stg!=null)
-    .sort((a,b)=> (a.date.replaceAll("/","")+a.time.replace(":","")).localeCompare(b.date.replaceAll("/","")+b.time.replace(":","")));
-  return { labels: filtered.map(v=>v.obsTime), data: filtered.map(v=>v.stg) };
+  
+  const filtered = allValues
+    .sort((a, b) =>
+      (a.date.replaceAll("/","") + a.time.replace(":",""))
+      .localeCompare(b.date.replaceAll("/","") + b.time.replace(":",""))
+    );
+    
+  return {
+    labels: filtered.map(v => v.obsTime || ""),   // obsTime がなければ空文字
+    data: filtered.map(v => v.stg != null ? v.stg : null)  // stg がなければ null
+  };
 }
 
 function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2, obsId){
