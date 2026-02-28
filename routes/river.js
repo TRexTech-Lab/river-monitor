@@ -6,7 +6,7 @@ router.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-router.get("/waterlevel", async (req, res) => {
+router.get("/current", async (req, res) => {
   try {
     const { labels, data } = await riverService.getCurrentWaterLevel();
     res.send(riverService.buildChartHtml("Current Water Level", labels, data));
@@ -15,7 +15,7 @@ router.get("/waterlevel", async (req, res) => {
   }
 });
 
-router.get("/weekgraph", async (req, res) => {
+router.get("/week", async (req, res) => {
   try {
     const { labels, data } = await riverService.getWeekData();
     res.send(riverService.buildChartHtml("Past 7 Days Water Level", labels, data));
