@@ -2,38 +2,53 @@ const express = require("express");
 const router = express.Router();
 const riverService = require("../services/riverService");
 
+// 健康チェック
 router.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
+// 現在の水位グラフ（単独）
 router.get("/current", async (req, res) => {
+  const obsId = req.query.obsId || "2155500400010";
   try {
     const { labels, data } = await riverService.getCurrentWaterLevel(obsId);
     res.send(riverService.buildChartHtml("Current Water Level", labels, data));
   } catch (err) {
-    res.send("Error: " + err.message);
+    res.status(500).send("Error: " + err.message);
   }
 });
 
+// 過去7日分グラフ（単独）
 router.get("/week", async (req, res) => {
+  const obsId = req.query.obsId || "2155500400010";
   try {
     const { labels, data } = await riverService.getWeekData(obsId);
     res.send(riverService.buildChartHtml("Past 7 Days Water Level", labels, data));
   } catch (err) {
-    res.send("Error: " + err.message);
+    res.status(500).send("Error: " + err.message);
   }
 });
 
+// 両方グラフ（HTML or JSON）
 router.get("/both", async (req, res) => {
-  const obsId = req.query.obsId || "2155500400010"; // デフォルト観測ポイント
+  const obsId = req.query.obsId || "2155500400010";
   try {
     const current = await riverService.getCurrentWaterLevel(obsId);
     const week = await riverService.getWeekData(obsId);
-    res.send(riverService.buildDoubleChartHtml(
-      "Current Water Level", current.labels, current.data,
-      "Past Week Water Level", week.labels, week.data,
-      obsId // HTML 側で select の値を初期設定
-    ));
+
+    if (req.query.json) {
+      res.json({ current, week });  // JSONで返す
+    } else {
+      res.send(riverService.buildDoubleChartHtml(
+        "Current Water Level",
+        current.labels,
+        current.data,
+        "Past Week Water Level",
+        week.labels,
+        week.data,
+        obsId
+      ));
+    }
   } catch (err) {
     console.error("both route error:", err);
     res.status(500).send("Error fetching water level data");
