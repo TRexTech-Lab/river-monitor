@@ -24,6 +24,7 @@ router.get("/week", async (req, res) => {
   }
 });
 
+/*
 router.get("/both", async (req, res) => {
   const obsId = req.query.obsId || "2155500400010"; // デフォルト観測ポイント
   try {
@@ -39,5 +40,34 @@ router.get("/both", async (req, res) => {
     res.status(500).send("Error fetching water level data");
   }
 });
+*/
 
+app.get("/both", async (req, res) => {
+  const obsId = req.query.obsId || "2155500400010";
+
+  const current = await getCurrentWaterLevel(obsId);
+  const week = await getWeekData(obsId);
+
+  res.json({ current, week });
+});
+
+app.get("/", async (req, res) => {
+  const obsId = req.query.obsId || "2155500400010";
+  const current = await getCurrentWaterLevel(obsId);
+  const week = await getWeekData(obsId);
+
+  const html = buildDoubleChartHtml(
+    "Current Water Level",
+    current.labels,
+    current.data,
+    "Past Week Water Level",
+    week.labels,
+    week.data,
+    obsId
+  );
+
+    res.send(html);
+});
+  
+app.listen(3000, () => console.log("Server running on http://localhost:3000"));
 module.exports = router;
