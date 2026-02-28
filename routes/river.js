@@ -9,9 +9,9 @@ router.get("/health", (req, res) => {
 router.get("/waterlevel", async (req, res) => {
   try {
     const data = await riverService.getCurrentWaterLevel();
-    res.json(data);
+    res.send(riverService.buildChartHtml("Current Water Level", labels, data));
   } catch (err) {
-    res.json({ error: err.message });
+    res.send("Error: " + err.message);
   }
 });
 
