@@ -26,8 +26,8 @@ router.get("/week", async (req, res) => {
 
 router.get("/both", async (req, res) => {
   try {
-    const current = await getCurrentWaterLevel();
-    const week = await getWeekData();
+    const current = await getCurrentWaterLevel().catch(() => ({ labels: [], data: [] }));
+    const week = await getWeekData().catch(() => ({ labels: [], data: [] }));
 
     res.send(
       buildDoubleChartHtml(
