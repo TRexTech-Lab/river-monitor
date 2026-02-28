@@ -100,13 +100,15 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2) {
       <head>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <style>
-          canvas { display: block; margin: 20px auto; max-width: 800px; }
+          body { font-family: sans-serif; text-align: center; }
+          h2 { font-size: 18px; margin: 20px 0 10px; } /* 小さめに調整 */
+          canvas { display: block; margin: 0 auto 40px; max-width: 90%; height: 400px; }
         </style>
       </head>
       <body>
-        <h3>${title1}</h3>
+        <h2>${title1}</h2>
         <canvas id="chart1"></canvas>
-        <h3>${title2}</h3>
+        <h2>${title2}</h2>
         <canvas id="chart2"></canvas>
         <script>
           const ctx1 = document.getElementById('chart1');
@@ -117,9 +119,13 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2) {
               datasets: [{
                 label: 'Water Level (m)',
                 data: ${JSON.stringify(data1)},
-                borderWidth: 1,
+                borderWidth: 2,
                 tension: 0.2
               }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false
             }
           });
 
@@ -131,9 +137,13 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2) {
               datasets: [{
                 label: 'Water Level (m)',
                 data: ${JSON.stringify(data2)},
-                borderWidth: 1,
+                borderWidth: 2,
                 tension: 0.2
               }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false
             }
           });
         </script>
