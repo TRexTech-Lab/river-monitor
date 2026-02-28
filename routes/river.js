@@ -26,8 +26,8 @@ router.get("/week", async (req, res) => {
 
 router.get("/both", async (req, res) => {
   try {
-    const current = await getCurrentWaterLevel().catch(e => { console.error("current error", e); return {labels: [], data: []}; });
-    const week = await getWeekData().catch(e => { console.error("week error", e); return {labels: [], data: []}; });
+    const current = await　riverService.getCurrentWaterLevel().catch(e => { console.error("current error", e); return {labels: [], data: []}; });
+    const week = await riverService.getWeekData().catch(e => { console.error("week error", e); return {labels: [], data: []}; });
     res.send(
       buildDoubleChartHtml(
         "Current Water Level", current.labels, current.data,
