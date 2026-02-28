@@ -1,6 +1,7 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const { exec } = require("child_process");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,6 +11,24 @@ const CACHE_FILE = path.join(__dirname, "python", "waterlevel_cache.json");
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
+});
+
+function runWaterFetch() {
+  console.log("Running water fetch...");
+  exec("python3 fetch_waterlevel.py", (err, stdout, stderr) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    console.log(stdout);
+  });
+}
+
+// 1時間ごとに実行
+setInterval(runWaterFetch, 60 * 60 * 1000);
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
 
 app.get("/waterlevel", (req, res) => {
