@@ -6,7 +6,7 @@ async function getCurrentTime() {
   return res.data.obsValue?.obsTime || res.data.crntObsTime;
 }
 
-async function getCurrentWaterLevel(obsId) {
+async function getCurrentWaterLevel10min(obsId) {
   try {
     const currentTime = await getCurrentTime();
     const date = currentTime.slice(0, 10).replaceAll("/", "");
@@ -20,6 +20,23 @@ async function getCurrentWaterLevel(obsId) {
     return { labels: [], data: [] };
   }
 }
+
+async function getCurrentWaterLevelHour(obsId) {
+  try {
+    const currentTime = await getCurrentTime();
+    const date = currentTime.slice(0, 10).replaceAll("/", "");
+    const time = currentTime.slice(11, 16).replace(":", "");
+    const url = `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${obsId}.json`;
+    const res = await axios.get(url);
+    const values = (res.data.hrValues || []).filter(v => v.stg !== null);
+    return { labels: values.map(v => v.obsTime).reverse(), data: values.map(v => v.stg).reverse() };
+  } catch (err) {
+    console.error(err);
+    return { labels: [], data: [] };
+  }
+}
+
+
 
 async function getWeekData(obsId) {
   const today = new Date();
@@ -98,4 +115,9 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2, ob
   `;
 }
 
-module.exports = { getCurrentWaterLevel, getWeekData, buildDoubleChartHtml };
+module.exports = { 
+  getCurrentWaterLevel10min, 
+  getCurrentWaterLevelHour, 
+  getWeekData,
+  buildDoubleChartHtml
+};
