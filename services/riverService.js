@@ -8,13 +8,13 @@ async function getCurrentTime() {
   return timeRes.data.obsValue?.obsTime || timeRes.data.crntObsTime;
 }
 
-async function getCurrentWaterLevel() {
+async function getCurrentWaterLevel(obsId) {
   try {
     const currentTime = await getCurrentTime();
     const date = currentTime.slice(0, 10).replaceAll("/", "");
     const time = currentTime.slice(11, 16).replace(":", "");
 
-    const dataUrl = `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${OBS_ID}.json`;
+    const dataUrl = `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${obsId}.json`;
     const dataRes = await axios.get(dataUrl);
 
     const values = (dataRes.data.min10Values || []).filter(v => v.stg !== null);
@@ -29,7 +29,7 @@ async function getCurrentWaterLevel() {
   }
 }
 
-async function getWeekData() {
+async function getWeekData(obsId) {
   const today = new Date();
   const allValues = [];
 
@@ -41,7 +41,7 @@ async function getWeekData() {
     const mm = String(d.getMonth() + 1).padStart(2, "0");
     const dd = String(d.getDate()).padStart(2, "0");
     const dateStr = `${yyyy}${mm}${dd}`;
-    const url = `https://www.river.go.jp/kawabou/file/files/tmlist/past/stg/${dateStr}/${OBS_ID}.json`;
+    const url = `https://www.river.go.jp/kawabou/file/files/tmlist/past/stg/${dateStr}/${obsId}.json`;
 
     try {
       const response = await axios.get(url);
@@ -50,6 +50,20 @@ async function getWeekData() {
       console.log("skip:", dateStr);
     }
   }
+
+  const filtered = allValues
+    .filter(v => v.stg != null)
+    .sort((a, b) => {
+      const keyA = a.date.replaceAll("/", "") + a.time.replace(":", "");
+      const keyB = b.date.replaceAll("/", "") + b.time.replace(":", "");
+      return keyA.localeCompare(keyB);
+    });
+
+  return {
+    labels: filtered.map(v => v.obsTime),
+    data: filtered.map(v => v.stg)
+  };
+}
 
   const filtered = allValues
     .filter(v => v.stg != null)
