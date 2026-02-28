@@ -101,14 +101,27 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2) {
         <style>
           body { font-family: sans-serif; text-align: center; }
           h2 { font-size: 18px; margin: 20px 0 10px; }
-          canvas { display: block; margin: 0 auto 40px; max-width: 90%; height: 400px }
+          .chart-container {
+            width: 90%;
+            max-width: 800px;
+            height: 400px;
+            margin: 20px auto;
+          }
+          canvas {
+            width: 100% !important;
+            height: 100% !important;
+          }
         </style>
       </head>
       <body>
         <h2>${title1}</h2>
-        <canvas id="chart1"></canvas>
+        <div class="chart-container">
+          <canvas id="chart1"></canvas>
+        </div>
         <h2>${title2}</h2>
-        <canvas id="chart2"></canvas>
+        <div class="chart-container">
+          <canvas id="chart2"></canvas>
+        </div>
         <script>
           new Chart(document.getElementById('chart1'), {
             type: 'line',
@@ -121,7 +134,10 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2) {
                 tension: 0.2
               }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: {
+              responsive: true,
+              maintainAspectRatio: false
+            }
           });
 
           new Chart(document.getElementById('chart2'), {
@@ -135,7 +151,10 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2) {
                 tension: 0.2
               }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: {
+              responsive: true,
+              maintainAspectRatio: false
+            }
           });
         </script>
       </body>
