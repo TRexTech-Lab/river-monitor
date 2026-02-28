@@ -54,6 +54,15 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2, ob
     <select id="obsSelect">
       <option value="2155500400010" ${obsId==="2155500400010"?"selected":""}>神通川・空港前</option>
       <option value="2209700400001" ${obsId==="2209700400001"?"selected":""}>九頭竜川・五松橋</option>
+      <option value="0537700400045" ${obsId==="0537700400045"?"selected":""}>長良川・白鳥</option>
+      <option value="0563300400030" ${obsId==="0563300400030"?"selected":""}>興津川・和田島橋</option>
+      <option value="0358500400018" ${obsId==="0358500400018"?"selected":""}>酒匂川・松田</option>
+      <option value="0358500400001" ${obsId==="0358500400001"?"selected":""}>桂川・大月</option>
+      <option value="0358500400002" ${obsId==="0358500400002"?"selected":""}>相模川・上依知</option>
+      <option value="2128900400031" ${obsId==="2128900400031"?"selected":""}>利根川・前橋</option>
+      <option value="2126100400019" ${obsId==="2126100400019"?"selected":""}>鬼怒川・宝積寺(下)</option>
+      <option value="2127100400010" ${obsId==="2209700400001"?"selected":""}>中川・黒羽</option>
+      <option value="0128100400011" ${obsId==="0128100400011"?"selected":""}>阿仁川・米内沢</option>
     </select>
 
     <h2>${title1}</h2>
