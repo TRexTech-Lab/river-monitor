@@ -107,7 +107,7 @@ function buildChartHtml(title, labels, data) {
   `;
 }
 
-function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2) {
+function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2, obsId) {
   return `
     <html>
       <head>
@@ -121,54 +121,47 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2) {
             height: 400px;
             margin: 20px auto;
           }
-          canvas {
-            width: 100%;
-            height: 100%;
-          }
+          canvas { width: 100% !important; height: 100% !important; }
         </style>
       </head>
       <body>
+        <label for="obsSelect">観測ポイントを選択:</label>
+        <select id="obsSelect">
+          <option value="2155500400010" ${obsId === "2155500400010" ? "selected" : ""}>Sample River</option>
+          <option value="2155500400020" ${obsId === "2155500400020" ? "selected" : ""}>Another River</option>
+        </select>
+
         <h2>${title1}</h2>
-        <div class="chart-container">
-          <canvas id="chart1"></canvas>
-        </div>
+        <div class="chart-container"><canvas id="chart1"></canvas></div>
         <h2>${title2}</h2>
-        <div class="chart-container">
-          <canvas id="chart2"></canvas>
-        </div>
+        <div class="chart-container"><canvas id="chart2"></canvas></div>
+
         <script>
-          new Chart(document.getElementById('chart1'), {
-            type: 'line',
-            data: {
-              labels: ${JSON.stringify(labels1)},
-              datasets: [{
-                label: 'Water Level (m)',
-                data: ${JSON.stringify(data1)},
-                borderWidth: 2,
-                tension: 0.2
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false
-            }
+          async function loadBothCharts(obsId) {
+            const res = await fetch('/both?obsId=' + obsId);
+            const html = await res.text();
+            document.open();
+            document.write(html);
+            document.close();
+          }
+
+          document.getElementById('obsSelect').addEventListener('change', (e) => {
+            loadBothCharts(e.target.value);
           });
 
-          new Chart(document.getElementById('chart2'), {
+          // 初期描画
+          const ctx1 = document.getElementById('chart1');
+          new Chart(ctx1, {
             type: 'line',
-            data: {
-              labels: ${JSON.stringify(labels2)},
-              datasets: [{
-                label: 'Water Level (m)',
-                data: ${JSON.stringify(data2)},
-                borderWidth: 2,
-                tension: 0.2
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false
-            }
+            data: { labels: ${JSON.stringify(labels1)}, datasets: [{ label: 'Water Level (m)', data: ${JSON.stringify(data1)}, borderWidth: 2, tension: 0.2 }] },
+            options: { responsive: true, maintainAspectRatio: false }
+          });
+
+          const ctx2 = document.getElementById('chart2');
+          new Chart(ctx2, {
+            type: 'line',
+            data: { labels: ${JSON.stringify(labels2)}, datasets: [{ label: 'Water Level (m)', data: ${JSON.stringify(data2)}, borderWidth: 2, tension: 0.2 }] },
+            options: { responsive: true, maintainAspectRatio: false }
           });
         </script>
       </body>
