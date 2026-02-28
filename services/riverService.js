@@ -145,5 +145,6 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2) {
 module.exports = {
   getCurrentWaterLevel,
   getWeekData,
-  buildChartHtml
+  buildChartHtml,
+  buildDoubleChartHtml
 };
