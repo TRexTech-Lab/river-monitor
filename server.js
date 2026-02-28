@@ -6,6 +6,8 @@ const { exec } = require("child_process");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+npm install axios cheerio
+
 // Pythonが書き込むJSONファイル
 const CACHE_FILE = path.join(__dirname, "python", "waterlevel_cache.json");
 
