@@ -126,6 +126,12 @@ app.get("/weekgraph", async (req, res) => {
     const labels = filtered.map(v => v.obsTime);
     const data = filtered.map(v => v.stg);
 
+    res.json({
+      totalCount: allValues.length,
+      first: allValues[0]
+    });
+
+    /*
     res.send(`
       <html>
       <head>
@@ -158,7 +164,7 @@ app.get("/weekgraph", async (req, res) => {
       </body>
       </html>
     `);
-
+    */
   } catch (err) {
     res.send("Error: " + err.message);
   }
