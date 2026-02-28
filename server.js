@@ -113,7 +113,7 @@ app.get("/weekgraph", async (req, res) => {
 
       try {
         const response = await axios.get(url);
-        allValues.push(...response.data);
+        allValues.push(...response.data.pastValues);
       } catch (err) {
         console.log("skip:", dateStr);
       }
