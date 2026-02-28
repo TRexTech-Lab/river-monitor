@@ -18,36 +18,14 @@ async function getCurrentWaterLevel() {
     `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${OBS_ID}.json`;
 
   const dataRes = await axios.get(dataUrl);
-  const values = dataRes.data.min10Values.filter(v => v.stg !== null);
+
+  const values = dataRes.data.min10Values
+    .filter(v => v.stg !== null);
 
   const labels = values.map(v => v.obsTime).reverse();
   const data = values.map(v => v.stg).reverse();
 
-  res.send(`
-    <html>
-    <head>
-      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    </head>
-    <body>
-      <h2>River Water Level</h2>
-      <canvas id="myChart"></canvas>
-      <script>
-        const ctx = document.getElementById('myChart');
-        new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: ${JSON.stringify(labels)},
-            datasets: [{
-              label: 'Water Level (m)',
-              data: ${JSON.stringify(data)},
-              borderWidth: 2
-            }]
-          }
-        });
-      </script>
-    </body>
-    </html>
-  `);
+  return { labels, data };
 }
 
 async function getWeekData() {
