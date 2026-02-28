@@ -2,8 +2,8 @@ const axios = require("axios");
 
 async function getCurrentTime() {
   const TIME_URL = "https://www.river.go.jp/kawabou/file/system/tmCrntTime.json";
-  const timeRes = await axios.get(TIME_URL);
-  return timeRes.data.obsValue?.obsTime || timeRes.data.crntObsTime;
+  const res = await axios.get(TIME_URL);
+  return res.data.obsValue?.obsTime || res.data.crntObsTime;
 }
 
 async function getCurrentWaterLevel(obsId) {
@@ -16,7 +16,7 @@ async function getCurrentWaterLevel(obsId) {
     const values = (res.data.min10Values || []).filter(v => v.stg !== null);
     return { labels: values.map(v => v.obsTime).reverse(), data: values.map(v => v.stg).reverse() };
   } catch (err) {
-    console.error("getCurrentWaterLevel error:", err);
+    console.error(err);
     return { labels: [], data: [] };
   }
 }
@@ -36,7 +36,7 @@ async function getWeekData(obsId) {
   return { labels: filtered.map(v=>v.obsTime), data: filtered.map(v=>v.stg) };
 }
 
-function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2, obsId) {
+function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2, obsId){
   return `
   <html>
   <head>
@@ -63,7 +63,6 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2, ob
 
     <script>
       let chart1, chart2;
-
       async function fetchBothData(obsId){
         const res = await fetch('/both?obsId=' + obsId + '&json=1');
         return await res.json();
@@ -72,14 +71,8 @@ function buildDoubleChartHtml(title1, labels1, data1, title2, labels2, data2, ob
       function drawCharts(l1,d1,l2,d2){
         if(chart1) chart1.destroy();
         if(chart2) chart2.destroy();
-        chart1 = new Chart(document.getElementById('chart1'), {
-          type:'line', data:{ labels:l1, datasets:[{label:'Water Level (m)', data:d1, borderWidth:2, tension:0.2 }] },
-          options:{ responsive:true, maintainAspectRatio:false }
-        });
-        chart2 = new Chart(document.getElementById('chart2'), {
-          type:'line', data:{ labels:l2, datasets:[{label:'Water Level (m)', data:d2, borderWidth:2, tension:0.2 }] },
-          options:{ responsive:true, maintainAspectRatio:false }
-        });
+        chart1 = new Chart(document.getElementById('chart1'), { type:'line', data:{ labels:l1, datasets:[{label:'Water Level (m)', data:d1, borderWidth:2, tension:0.2 }] }, options:{ responsive:true, maintainAspectRatio:false } });
+        chart2 = new Chart(document.getElementById('chart2'), { type:'line', data:{ labels:l2, datasets:[{label:'Water Level (m)', data:d2, borderWidth:2, tension:0.2 }] }, options:{ responsive:true, maintainAspectRatio:false } });
       }
 
       document.getElementById('obsSelect').addEventListener('change', async (e)=>{
