@@ -15,7 +15,10 @@ app.get("/health", (req, res) => {
 
 function runWaterFetch() {
   console.log("Running water fetch...");
-  exec("python3 fetch_waterlevel.py", (err, stdout, stderr) => {
+
+  const scriptPath = path.join(__dirname, "python", "fetch_waterlevel.py");
+  
+  exec(`python3 ${scriptPath}`, (err, stdout, stderr) => {
     if (err) {
       console.error(err);
       return;
