@@ -120,15 +120,21 @@ app.get("/weekgraph", async (req, res) => {
     }
 
     const filtered = allValues
-      .filter(v => v.stg !== null)
-      .sort((a, b) => new Date(a.obsTime) - new Date(b.obsTime));
+      .filter(v => v.stg != null)
+      .sort((a, b) => {
+        const keyA = a.date.replaceAll("/", "") + a.time.replace(":", "");
+        const keyB = b.date.replaceAll("/", "") + b.time.replace(":", "");
+        return keyA.localeCompare(keyB);
+      });
 
     const labels = filtered.map(v => v.obsTime);
     const data = filtered.map(v => v.stg);
 
     res.json({
       totalCount: allValues.length,
-      first: allValues[0]
+      filteredCount: filtered.length,
+      first: filtered[0],
+      last: filtered[filtered.length - 1]
     });
 
     /*
