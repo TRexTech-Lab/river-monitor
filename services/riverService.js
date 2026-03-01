@@ -156,7 +156,7 @@ function buildTripleChartHtml(title10min, labels10min, data10min,
       <option value="0358500400002" ${obsId==="0358500400002"?"selected":""}>相模川・上依知</option>
       <option value="2128900400031" ${obsId==="2128900400031"?"selected":""}>利根川・前橋</option>
       <option value="2126100400019" ${obsId==="2126100400019"?"selected":""}>鬼怒川・宝積寺(下)</option>
-      <option value="2127100400010" ${obsId==="2127100400010"?"selected":""}>中川・黒羽</option>
+      <option value="2127100400010" ${obsId==="2127100400010"?"selected":""}>那珂川・黒羽</option>
       <option value="0128100400011" ${obsId==="0128100400011"?"selected":""}>阿仁川・米内沢</option>
     </select>
 
