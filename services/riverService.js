@@ -7,6 +7,19 @@ async function getCurrentTime() {
   return res.data.obsValue?.obsTime || res.data.crntObsTime;
 }
 
+// --- 水位の正規化（欠測処理の統一） ---
+function normalizeStg(v) {
+  if (!v) return null;
+
+  // 欠測コード（160など）は無効
+  if (v.stgCcd && v.stgCcd !== 0) return null;
+
+  if (v.stg === null || v.stg === undefined) return null;
+  if (v.stg === "" || v.stg === "-") return null;
+
+  return Number(v.stg);
+}
+
 // --- 10分ごとの水位 ---
 async function getCurrentWaterLevel10min(obsId) {
   try {
@@ -14,17 +27,17 @@ async function getCurrentWaterLevel10min(obsId) {
     const date = currentTime.slice(0, 10).replaceAll("/", "");
     const time = currentTime.slice(11, 16).replace(":", "");
     const url = `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${obsId}.json`;
+
     const res = await axios.get(url);
-    const values = (res.data.min10Values || []).map(v => {
-      if (v.stg === null || v.stg === undefined || v.stg === "" || v.stg === "-") return null;
-      return Number(v.stg);
-    });
+    const raw = res.data.min10Values || [];
+
     return {
-      labels: (res.data.min10Values || []).map(v => v.obsTime).reverse(),
-      data: values.reverse()
+      labels: raw.map(v => v.obsTime).reverse(),
+      data: raw.map(v => normalizeStg(v)).reverse()
     };
+
   } catch (err) {
-    console.error(err);
+    console.error("10min fetch error:", err.message);
     return { labels: [], data: [] };
   }
 }
@@ -36,20 +49,21 @@ async function getCurrentWaterLevelHour(obsId) {
     const date = currentTime.slice(0, 10).replaceAll("/", "");
     const time = currentTime.slice(11, 16).replace(":", "");
     const url = `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${obsId}.json`;
+
     const res = await axios.get(url);
-    const values = (res.data.hrValues || []).map(v => {
-      if (v.stg === null || v.stg === undefined || v.stg === "" || v.stg === "-") return null;
-      return Number(v.stg);
-    });
+    const raw = res.data.hrValues || [];
+
     return {
-      labels: (res.data.hrValues || []).map(v => v.obsTime).reverse(),
-      data: values.reverse()
+      labels: raw.map(v => v.obsTime).reverse(),
+      data: raw.map(v => normalizeStg(v)).reverse()
     };
+
   } catch (err) {
-    console.error(err);
+    console.error("Hour fetch error:", err.message);
     return { labels: [], data: [] };
   }
 }
+
 
 // --- 過去7日分 ---
 async function getWeekData(obsId) {
