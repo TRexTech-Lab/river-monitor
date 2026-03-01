@@ -19,13 +19,13 @@ router.get("/both", async (req, res) => {
       res.json({ current10min, currentHour, week });
     } else {
       res.send(riverService.buildTripleChartHtml(
-        "Water Level (8hours)",
+        "8h-Water Level (m)",
         current10min.labels,
         current10min.data,
-        "Water Level (3days)",
+        "3d-Water Level (m)",
         currentHour.labels,
         currentHour.data,
-        "Water Level (10days)",
+        "10d-Water Level (m)",
         week.labels,
         week.data,
         obsId
