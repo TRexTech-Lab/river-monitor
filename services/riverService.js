@@ -69,14 +69,18 @@ async function getCurrentWaterLevelHour(obsId) {
 async function getWeekData(obsId) {
   const today = new Date();
   let allValues = [];
+
   for (let i = 0; i < 7; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
+
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, "0");
     const dd = String(d.getDate()).padStart(2, "0");
     const dateStr = `${yyyy}${mm}${dd}`;
+
     const url = `https://www.river.go.jp/kawabou/file/files/tmlist/past/stg/${dateStr}/${obsId}.json`;
+
     try {
       const res = await axios.get(url);
       allValues.push(...(res.data.pastValues || []));
@@ -85,19 +89,42 @@ async function getWeekData(obsId) {
     }
   }
 
-  // 日付と時間でソート
-  const filtered = allValues.sort((a, b) =>
-    (a.date.replaceAll("/", "") + a.time.replace(":", "")).localeCompare(
-      b.date.replaceAll("/", "") + b.time.replace(":", "")
-    )
-  );
-
-  const data = filtered.map(v => {
-    if (v.stg === null || v.stg === undefined || v.stg === "" || v.stg === "-") return null;
-    return Number(v.stg);
+  // 日付＋時間で昇順ソート
+  const sorted = allValues.sort((a, b) => {
+    const aKey = (a.date || "").replaceAll("/", "") + (a.time || "").replace(":", "");
+    const bKey = (b.date || "").replaceAll("/", "") + (b.time || "").replace(":", "");
+    return aKey.localeCompare(bKey);
   });
 
-  return { labels: filtered.map(v => v.obsTime), data };
+  // 欠測込みで安全変換
+  const labels = [];
+  const data = [];
+
+  for (const v of sorted) {
+    const label = v.obsTime || `${v.date} ${v.time}`;
+    labels.push(label);
+
+    // --- ここが重要 ---
+    if (!v) {
+      data.push(null);
+      continue;
+    }
+
+    // stgCcd が 0 以外なら欠測
+    if (v.stgCcd && v.stgCcd !== 0) {
+      data.push(null);
+      continue;
+    }
+
+    if (v.stg === null || v.stg === undefined || v.stg === "" || v.stg === "-") {
+      data.push(null);
+      continue;
+    }
+
+    data.push(Number(v.stg));
+  }
+
+  return { labels, data };
 }
 
 // --- 3枚グラフ描画 HTML ---
