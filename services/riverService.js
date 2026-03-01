@@ -163,7 +163,7 @@ function buildTripleChartHtml(title10min, labels10min, data10min,
       }
 
       async function fetchAllData(obsId){
-        const res = await fetch('/both?obsId='+obsId+'&json=1');
+        const res = await fetch('/waterlevel?obsId='+obsId+'&json=1');
         const json = await res.json();
         return { current10min: json.current10min, currentHour: json.currentHour, week: json.week };
       }
