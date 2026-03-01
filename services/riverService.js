@@ -177,7 +177,7 @@ function buildTripleChartHtml(title10min, labels10min, data10min,
 
         chart10min = new Chart(document.getElementById('chart10min'), {
           type:'line',
-          data:{ labels:l10, datasets:[{label:'Water Level (8hours) (m)', data:d10, borderWidth:2, spanGaps:false, tension:0.2}]},
+          data:{ labels:l10, datasets:[{data:d10, borderWidth:2, spanGaps:false, tension:0.2}]},
           options:{ 
             responsive:true,
             maintainAspectRatio:false,
@@ -191,7 +191,7 @@ function buildTripleChartHtml(title10min, labels10min, data10min,
 
         chartHour = new Chart(document.getElementById('chartHour'), {
           type:'line',
-          data:{ labels:lHr, datasets:[{label:'Water Level (3Days) (m)', data:dHr, borderWidth:2, spanGaps:false, tension:0.2}]},
+          data:{ labels:lHr, datasets:[{data:dHr, borderWidth:2, spanGaps:false, tension:0.2}]},
           options:{ 
             responsive:true,
             maintainAspectRatio:false,
@@ -205,7 +205,7 @@ function buildTripleChartHtml(title10min, labels10min, data10min,
 
         chartWeek = new Chart(document.getElementById('chartWeek'), {
           type:'line',
-          data:{ labels:lW, datasets:[{label:'Water Level (10Days) (m)', data:dW, borderWidth:2, spanGaps:false, tension:0.2}]},
+          data:{ labels:lW, datasets:[{data:dW, borderWidth:2, spanGaps:false, tension:0.2}]},
           options:{ 
             responsive:true,
             maintainAspectRatio:false,
