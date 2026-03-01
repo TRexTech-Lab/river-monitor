@@ -8,7 +8,7 @@ router.get("/health", (req, res) => {
 });
 
 // 両方グラフ（10分・1時間・1週間）
-router.get("/both", async (req, res) => {
+router.get("/WaterLevel", async (req, res) => {
   const obsId = req.query.obsId || "2155500400010";
   try {
     const current10min = await riverService.getCurrentWaterLevel10min(obsId);
