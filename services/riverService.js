@@ -186,6 +186,113 @@ function buildTripleChartHtml(title10min, labels10min, data10min,
   `;
 }
 
+function buildQuadChartHtml(title10min, labels10min, data10min,
+                            titleHour, labelsHour, dataHour,
+                            titleWeek, labelsWeek, dataWeek,
+                            titleMonth, labelsMonth, dataMonth,
+                            currentObsId) {
+
+  // <select>のoptionを動的に作る
+  const optionsHtml = obsPoints.map(p =>
+    `<option value="${p.obs_id}" ${p.obs_id===currentObsId?"selected":""}>${p.name}</option>`
+  ).join("\n");
+
+  return `
+  <html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body { font-family: sans-serif; text-align: center; }
+      h2 { font-size: 18px; margin: 20px 0 10px; }
+      .chart-container { width: 90%; max-width: 800px; height: 400px; margin: 20px auto; }
+      canvas { width: 100% !important; height: 100% !important; }
+      select { font-size: 16px; margin: 10px; }
+    </style>
+  </head>
+  <body>
+    <label for="obsSelect">観測ポイントを選択:</label>
+    <select id="obsSelect">
+      ${optionsHtml}
+    </select>
+
+    <h2>${title10min}</h2>
+    <div class="chart-container"><canvas id="chart10min"></canvas></div>
+
+    <h2>${titleHour}</h2>
+    <div class="chart-container"><canvas id="chartHour"></canvas></div>
+
+    <h2>${titleWeek}</h2>
+    <div class="chart-container"><canvas id="chartWeek"></canvas></div>
+
+    <h2>${titleMonth}</h2>
+    <div class="chart-container"><canvas id="chartMonth"></canvas></div>
+
+    <script>
+      let chart10min, chartHour, chartWeek, chartMonth;
+
+      function drawCharts(l10,d10,lHr,dHr,lW,dW,lM,dM){
+        if(chart10min) chart10min.destroy();
+        if(chartHour) chartHour.destroy();
+        if(chartWeek) chartWeek.destroy();
+        if(chartMonth) chartMonth.destroy();
+
+        chart10min = new Chart(document.getElementById('chart10min'), {
+          type:'line',
+          data:{ labels:l10, datasets:[{data:d10, borderWidth:2, spanGaps:false, tension:0.2}]},
+          options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
+        });
+
+        chartHour = new Chart(document.getElementById('chartHour'), {
+          type:'line',
+          data:{ labels:lHr, datasets:[{data:dHr, borderWidth:2, spanGaps:false, tension:0.2}]},
+          options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
+        });
+
+        chartWeek = new Chart(document.getElementById('chartWeek'), {
+          type:'line',
+          data:{ labels:lW, datasets:[{data:dW, borderWidth:2, spanGaps:false, tension:0.2}]},
+          options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
+        });
+
+        chartMonth = new Chart(document.getElementById('chartMonth'), {
+          type:'line',
+          data:{ labels:lM, datasets:[{data:dM, borderWidth:2, spanGaps:false, tension:0.2}]},
+          options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
+        });
+      }
+
+      async function fetchAllData(obsId){
+        const res = await fetch('/waterlevel?obsId='+obsId+'&json=1');
+        const json = await res.json();
+        return { 
+          current10min: json.current10min, 
+          currentHour:  json.currentHour, 
+          week:         json.week,
+          month:        json.month   // 4枚目
+        };
+      }
+
+      document.getElementById('obsSelect').addEventListener('change', async (e)=>{
+        const obs = e.target.value;
+        const json = await fetchAllData(obs);
+        drawCharts(json.current10min.labels,json.current10min.data,
+                   json.currentHour.labels,json.currentHour.data,
+                   json.week.labels,json.week.data,
+                   json.month.labels,json.month.data);
+      });
+
+      // 初期描画
+      drawCharts(${JSON.stringify(labels10min)}, ${JSON.stringify(data10min)},
+                 ${JSON.stringify(labelsHour)}, ${JSON.stringify(dataHour)},
+                 ${JSON.stringify(labelsWeek)}, ${JSON.stringify(dataWeek)},
+                 ${JSON.stringify(labelsWeek)}, ${JSON.stringify(dataWeek)}); // ←仮でweekデータをmonthに
+    </script>
+  </body>
+  </html>
+  `;
+}
+
+
 module.exports = {
   getCurrentWaterLevel10min,
   getCurrentWaterLevelHour,
