@@ -297,5 +297,6 @@ module.exports = {
   getCurrentWaterLevel10min,
   getCurrentWaterLevelHour,
   getWeekData,
-  buildTripleChartHtml
+  buildTripleChartHtml,
+  buildQuadChartHtml
 };
