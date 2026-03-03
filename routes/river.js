@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const riverService = require("../services/riverService");
 const { saveWeekData } = require("../services/supabaseService");
-const obsPoints = require("../obsPoints");
+const obsPoints = require("../services/obsPoints");
 
 // =========================
 // 健康チェック
