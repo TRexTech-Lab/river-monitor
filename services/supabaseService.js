@@ -26,7 +26,7 @@ async function saveWeekData(obsId, weekData) {
   if (rows.length === 0) return;
 
   const { error } = await supabase
-    .from("water_levels_week")
+    .from("water_levels")
     .upsert(rows, { onConflict: ["obs_id", "obs_time"] });
 
   if (error) {
