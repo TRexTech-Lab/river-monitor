@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const riverService = require("../services/riverService");
+const { saveWeekData } = require("../services/supabaseService");
 
 // 健康チェック
 router.get("/health", (req, res) => {
@@ -8,13 +9,15 @@ router.get("/health", (req, res) => {
 });
 
 // 両方グラフ（10分・1時間・1週間）
-router.get("/WaterLevel", async (req, res) => {
+router.get("/waterlevel", async (req, res) => {
   const obsId = req.query.obsId || "2155500400010";
   try {
     const current10min = await riverService.getCurrentWaterLevel10min(obsId);
     const currentHour = await riverService.getCurrentWaterLevelHour(obsId);
     const week = await riverService.getWeekData(obsId);
 
+    await saveWeekData(obsId, week);
+    
     if (req.query.json) {
       res.json({ current10min, currentHour, week });
     } else {
