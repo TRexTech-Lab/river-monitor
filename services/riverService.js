@@ -123,7 +123,7 @@ function buildQuadChartHtml(
   titleSixMonth, labelsSixMonth, dataSixMonth,
   currentObsId
 ) {
-
+  
   const optionsHtml = obsPoints.map(p =>
     `<option value="${p.obs_id}" ${p.obs_id===currentObsId?"selected":""}>${p.name}</option>`
   ).join("\n");
@@ -186,10 +186,12 @@ function buildQuadChartHtml(
         if(chartWeek) chartWeek.destroy();
         if(chartSixMonth) chartSixMonth.destroy();
 
+        const l6_cut = l6.map(l => l.slice(0,10));
+
         chart10min = createChart('chart10min', l10, d10);
         chartHour = createChart('chartHour', lHr, dHr);
         chartWeek = createChart('chartWeek', lW, dW);
-        chartSixMonth = createChart('chartSixMonth', l6, d6);
+        chartSixMonth = createChart('chartSixMonth', l6_cut, d6);
       }
 
       async function fetchAllData(obsId){
