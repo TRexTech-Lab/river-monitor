@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const riverService = require("../services/riverService");
-const { saveWeekData, getMonthData } = require("../services/supabaseService"); // ← 追加
+const { saveWeekData, getMonthData } = require("../services/supabaseService"); 
 const obsPoints = require("../services/obsPoints");
 
 // =========================
@@ -21,7 +21,7 @@ router.get("/waterlevel", async (req, res) => {
     const current10min = await riverService.getCurrentWaterLevel10min(obsId);
     const currentHour  = await riverService.getCurrentWaterLevelHour(obsId);
     const week         = await riverService.getWeekData(obsId);
-    const sixMonth   = await riverService.getSixMonthData(obsId);
+    const sixMonth   = await riverService.getSixMonthDataFromDB(obsId);
 
     if (req.query.json) {
       return res.json({ current10min, currentHour, week, sixMonth });
