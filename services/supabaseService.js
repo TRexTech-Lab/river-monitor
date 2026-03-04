@@ -65,7 +65,7 @@ async function getSixMonthDataFromDB(obsId) {
   }
 
   return {
-    labels: data.map(d => d.obs_time.slice(0,10)),
+    labels: data.map(d => d.obs_time),
     data: data.map(d => d.water_level)
   };
 }
