@@ -120,101 +120,111 @@ function buildQuadChartHtml(
   titleSixMonth, labelsSixMonth, dataSixMonth,
   currentObsId
 ) {
+
   const optionsHtml = obsPoints.map(p =>
-    `<option value="${p.obs_id}" ${p.obs_id === currentObsId ? "selected" : ""}>${p.name}</option>`
+    `<option value="${p.obs_id}" ${p.obs_id===currentObsId?"selected":""}>${p.name}</option>`
   ).join("\n");
 
   return `
-<html>
-<head>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body { font-family: sans-serif; text-align: center; }
-    h2 { font-size: 18px; margin: 20px 0 10px; }
-    .chart-container { width: 90%; max-width: 800px; height: 400px; margin: 20px auto; }
-    canvas { width: 100% !important; height: 100% !important; }
-    select { font-size: 16px; margin: 10px; }
-  </style>
-</head>
-<body>
-  <label>観測ポイントを選択:</label>
-  <select id="obsSelect">${optionsHtml}</select>
+  <html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body { font-family: sans-serif; text-align: center; }
+      h2 { font-size: 18px; margin: 20px 0 10px; }
+      .chart-container { width: 90%; max-width: 800px; height: 400px; margin: 20px auto; }
+      canvas { width: 100% !important; height: 100% !important; }
+      select { font-size: 16px; margin: 10px; }
+    </style>
+  </head>
+  <body>
+    <label>観測ポイントを選択:</label>
+    <select id="obsSelect">${optionsHtml}</select>
 
-  <h2>${title10min}</h2>
-  <div class="chart-container"><canvas id="chart10min"></canvas></div>
+    <h2>${title10min}</h2>
+    <div class="chart-container"><canvas id="chart10min"></canvas></div>
 
-  <h2>${titleHour}</h2>
-  <div class="chart-container"><canvas id="chartHour"></canvas></div>
+    <h2>${titleHour}</h2>
+    <div class="chart-container"><canvas id="chartHour"></canvas></div>
 
-  <h2>${titleWeek}</h2>
-  <div class="chart-container"><canvas id="chartWeek"></canvas></div>
+    <h2>${titleWeek}</h2>
+    <div class="chart-container"><canvas id="chartWeek"></canvas></div>
 
-  <h2>${titleSixMonth}</h2>
-  <div class="chart-container"><canvas id="chartSixMonth"></canvas></div>
+    <h2>${titleSixMonth}</h2>
+    <div class="chart-container"><canvas id="chartSixMonth"></canvas></div>
 
-  <script>
-    let chart10min, chartHour, chartWeek, chartSixMonth;
+    <script>
+      let chart10min, chartHour, chartWeek, chartSixMonth;
 
-    function createChart(canvasId, labels, data){
-      return new Chart(document.getElementById(canvasId), {
-        type:'line',
-        data:{ labels, datasets:[{ data, borderWidth:2, tension:0.2 }] },
-        options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } }
-      });
-    }
-
-    function drawCharts(l10,d10,lHr,dHr,lW,dW,l6,d6){
-      if(chart10min) chart10min.destroy();
-      if(chartHour) chartHour.destroy();
-      if(chartWeek) chartWeek.destroy();
-      if(chartSixMonth) chartSixMonth.destroy();
-
-      chart10min = createChart('chart10min', l10, d10);
-      chartHour = createChart('chartHour', lHr, dHr);
-      chartWeek = createChart('chartWeek', lW, dW);
-
-      const l6_cut = l6.map(l => l.slice(0,10));
-      const ctx6 = document.getElementById('chartSixMonth').getContext('2d');
-      chartSixMonth = new Chart(ctx6, {
-        type:'line',
-        data: { labels: l6_cut, datasets:[{ data:d6, borderWidth:2, tension:0.2, borderColor:'blue', backgroundColor:'rgba(0,0,255,0.1)', fill:true }] },
-        options:{
-          responsive:true,
-          maintainAspectRatio:false,
-          plugins:{ legend:{ display:false } },
-          scales:{
-            x:{ type:'time', time:{ parser:'YYYY-MM-DD', unit:'month', tooltipFormat:'YYYY-MM-DD' }, ticks:{ autoSkip:true, maxRotation:0 }, grid:{ color:'#ccc' } },
-            y:{ beginAtZero:true, grid:{ color:'#eee' } }
+      function createChart(canvasId, labels, data, scaleUnit, isTime, isFill=false){
+        return new Chart(document.getElementById(canvasId), {
+          type:'line',
+          data:{
+            labels:labels,
+            datasets:[{
+              data:data,
+              borderWidth:2,
+              tension:0.2,
+              fill: isFill,
+              backgroundColor: isFill ? 'rgba(0,0,255,0.1)' : undefined,
+              borderColor: isFill ? 'blue' : undefined
+            }]
+          },
+          options:{
+            responsive:true,
+            maintainAspectRatio:false,
+            plugins:{
+              legend:{ display:false }
+            },
+            scales: isTime ? {
+              x: {
+                type:'time',
+                time:{ unit: scaleUnit, parser:'YYYY-MM-DD', tooltipFormat:'YYYY-MM-DD' },
+                ticks:{ autoSkip:true, maxRotation:0 }
+              },
+              y:{ beginAtZero:true }
+            } : {}
           }
-        }
+        });
+      }
+
+      function drawCharts(l10,d10,lHr,dHr,lW,dW,l6,d6){
+        if(chart10min) chart10min.destroy();
+        if(chartHour) chartHour.destroy();
+        if(chartWeek) chartWeek.destroy();
+        if(chartSixMonth) chartSixMonth.destroy();
+
+        chart10min = createChart('chart10min', l10, d10, 'hour', false);
+        chartHour = createChart('chartHour', lHr, dHr, 'day', true);
+        chartWeek = createChart('chartWeek', lW, dW, 'day', true);
+        chartSixMonth = createChart('chartSixMonth', l6, d6, 'month', true, true);
+      }
+
+      async function fetchAllData(obsId){
+        const res = await fetch('/waterlevel?obsId=' + obsId + '&json=1');
+        return await res.json();
+      }
+
+      document.getElementById('obsSelect').addEventListener('change', async (e)=>{
+        const obsId = e.target.value;
+        const json = await fetchAllData(obsId);
+        drawCharts(
+          json.current10min.labels, json.current10min.data,
+          json.currentHour.labels,  json.currentHour.data,
+          json.week.labels,         json.week.data,
+          json.sixMonth.labels,     json.sixMonth.data
+        );
       });
-    }
 
-    async function fetchAllData(obsId){
-      const res = await fetch('/waterlevel?obsId=' + obsId + '&json=1');
-      return await res.json();
-    }
-
-    document.getElementById('obsSelect').addEventListener('change', async (e)=>{
-      const json = await fetchAllData(e.target.value);
       drawCharts(
-        json.current10min.labels, json.current10min.data,
-        json.currentHour.labels, json.currentHour.data,
-        json.week.labels, json.week.data,
-        json.sixMonth.labels, json.sixMonth.data
+        ${JSON.stringify(labels10min)}, ${JSON.stringify(data10min)},
+        ${JSON.stringify(labelsHour)}, ${JSON.stringify(dataHour)},
+        ${JSON.stringify(labelsWeek)}, ${JSON.stringify(dataWeek)},
+        ${JSON.stringify(labelsSixMonth)}, ${JSON.stringify(dataSixMonth)}
       );
-    });
-
-    // 初期描画
-    drawCharts(
-      ${JSON.stringify(labels10min)}, ${JSON.stringify(data10min)},
-      ${JSON.stringify(labelsHour)}, ${JSON.stringify(dataHour)},
-      ${JSON.stringify(labelsWeek)}, ${JSON.stringify(dataWeek)},
-      ${JSON.stringify(labelsSixMonth)}, ${JSON.stringify(dataSixMonth)}
-    );
-  </script>
-</body>
-</html>
+    </script>
+  </body>
+  </html>
   `;
 }
 
