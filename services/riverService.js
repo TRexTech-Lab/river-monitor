@@ -171,7 +171,7 @@ function buildQuadChartHtml(
       if(chartWeek) chartWeek.destroy();
       if(chartSixMonth) chartSixMonth.destroy();
 
-      const l6_cut = l6.map(l => l.slice(0,10));
+      const l6_cut = l6.map(l => (l || "").trim().slice(0,10));
 
       chart10min = createChart('chart10min', l10, d10);
       chartHour = createChart('chartHour', lHr, dHr);
@@ -194,8 +194,7 @@ function buildQuadChartHtml(
           maintainAspectRatio:false,
           plugins:{ legend:{ display:false } },
           scales:{
-//            x:{ type:'time', time:{ parser:'YYYY-MM-DD', unit:'month', tooltipFormat:'YYYY-MM-DD' }, ticks:{ autoSkip:true, maxRotation:0 }, grid:{ color:'#ccc' } },
-            x:{ type:'time', ticks:{ autoSkip:true, maxRotation:0 }, grid:{ color:'#ccc' } },
+            x:{ type:'time', time:{ parser:'YYYY-MM-DD', unit:'month', tooltipFormat:'YYYY-MM-DD' }, ticks:{ autoSkip:true, maxRotation:0 }, grid:{ color:'#ccc' } },
             y:{ beginAtZero:true, grid:{ color:'#eee' } }
           }
         }
