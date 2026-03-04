@@ -116,7 +116,7 @@ function sortAndFormat(values, isSixMonth) {
 }
 
 // --- 4枚グラフHTML ---
-function buildQuadChartHtml_old(
+function buildQuadChartHtml(
   title10min, labels10min, data10min,
   titleHour, labelsHour, dataHour,
   titleWeek, labelsWeek, dataWeek,
@@ -222,7 +222,7 @@ function buildQuadChartHtml_old(
 }
 
 /////////////////////////////////
-function buildQuadChartHtml(
+function buildQuadChartHtml_new(
   title10min, labels10min, data10min,
   titleHour, labelsHour, dataHour,
   titleWeek, labelsWeek, dataWeek,
