@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const riverService = require("../services/riverService");
-const { saveWeekData } = require("../services/supabaseService");
+const { saveWeekData, getMonthData } = require("../services/supabaseService"); // ← 追加
 const obsPoints = require("../services/obsPoints");
 
 // =========================
@@ -12,31 +12,41 @@ router.get("/health", (req, res) => {
 });
 
 // =========================
-// グラフ表示（保存なし）
+// グラフ表示（4枚表示）
 // =========================
 router.get("/waterlevel", async (req, res) => {
   const obsId = req.query.obsId || "2155500400010";
 
   try {
     const current10min = await riverService.getCurrentWaterLevel10min(obsId);
-    const currentHour = await riverService.getCurrentWaterLevelHour(obsId);
-    const week = await riverService.getWeekData(obsId);
+    const currentHour  = await riverService.getCurrentWaterLevelHour(obsId);
+    const week         = await riverService.getWeekData(obsId);
+
+    // 🔥 Supabaseから30日分取得
+    const month        = await getMonthData(obsId);
 
     if (req.query.json) {
-      return res.json({ current10min, currentHour, week });
+      return res.json({ current10min, currentHour, week, month });
     }
 
     res.send(
-      riverService.buildTripleChartHtml(
+      riverService.buildQuadChartHtml(
         "8h-Water Level (m)",
         current10min.labels,
         current10min.data,
+
         "3d-Water Level (m)",
         currentHour.labels,
         currentHour.data,
+
         "10d-Water Level (m)",
         week.labels,
         week.data,
+
+        "30d-Saved Data (Supabase)",
+        month.labels,
+        month.data,
+
         obsId
       )
     );
@@ -52,12 +62,10 @@ router.get("/waterlevel", async (req, res) => {
 // =========================
 router.get("/cron/save", async (req, res) => {
   try {
-    // 🔐 秘密キー確認
     if (req.query.key !== process.env.CRON_KEY) {
       return res.status(403).json({ error: "forbidden" });
     }
 
-    // 並列保存
     await Promise.all(
       obsPoints.map(async (p) => {
         const week = await riverService.getWeekData(p.obs_id);
