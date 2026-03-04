@@ -47,36 +47,30 @@ async function saveWeekData(obsId, weekData) {
   }
 }
 
-async function getMonthData(obsId) {
-  try {
-    const { data, error } = await supabase
-      .from("water_levels")
-      .select("obs_time, water_level")
-      .eq("obs_id", obsId)
-      .order("obs_time", { ascending: true })
-      .gte(
-        "obs_time",
-        new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-      );
+// --- 過去6ヶ月 ---
+async function getSixMonthDataFromDB(obsId) {
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-    if (error) {
-      console.error("Supabase month fetch error:", error.message);
-      return { labels: [], data: [] };
-    }
+  const { data, error } = await supabase
+    .from("water_levels")
+    .select("obs_time, water_level")
+    .eq("obs_id", obsId)
+    .gte("obs_time", sixMonthsAgo.toISOString())
+    .order("obs_time", { ascending: true });
 
-    return {
-      labels: data.map(d => d.obs_time),
-      data: data.map(d => d.water_level)
-    };
-
-  } catch (err) {
-    console.error("Supabase month fetch error:", err.message);
+  if (error) {
+    console.error("Supabase 6month fetch error:", error.message);
     return { labels: [], data: [] };
   }
-}
 
+  return {
+    labels: data.map(d => d.obs_time),
+    data: data.map(d => d.water_level)
+  };
+}
 
 module.exports = { 
   saveWeekData,
-  getMonthData
+  getSixMonthDataFromDB
 };
