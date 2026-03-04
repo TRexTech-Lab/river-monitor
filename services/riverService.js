@@ -187,14 +187,14 @@ function buildQuadChartHtml(
       const ctx6 = document.getElementById('chartSixMonth').getContext('2d');
       chartSixMonth = new Chart(ctx6, {
         type: 'line',
-        data: { labels: l6, datasets:[{ data:d6, borderWidth:2, tension:0.2, borderColor:'blue', backgroundColor:'rgba(0,0,255,0.1)', fill:true }] },
+        data: { labels: l6_cut, datasets:[{ data:d6, borderWidth:2, tension:0.2, borderColor:'blue', backgroundColor:'rgba(0,0,255,0.1)', fill:true }] },
 
         options: {
           responsive:true,
           maintainAspectRatio:false,
           plugins:{ legend:{ display:false } },
           scales:{
-            x:{ type:'time', time:{ parser:'YYYY-MM-DD hh:mm', unit:'month', tooltipFormat:'YYYY-MM-DD' }, ticks:{ autoSkip:true, maxRotation:0 }, grid:{ color:'#ccc' } },
+    //        x:{ type:'time', time:{ parser:'YYYY-MM-DD', unit:'month', tooltipFormat:'YYYY-MM-DD' }, ticks:{ autoSkip:true, maxRotation:0 }, grid:{ color:'#ccc' } },
             y:{ beginAtZero:true, grid:{ color:'#eee' } }
           }
         }
