@@ -195,7 +195,7 @@ function buildQuadChartHtml(
           plugins:{ legend:{ display:false } },
           scales:{
 //            x:{ type:'time', time:{ parser:'YYYY-MM-DD', unit:'month', tooltipFormat:'YYYY-MM-DD' }, ticks:{ autoSkip:true, maxRotation:0 }, grid:{ color:'#ccc' } },
-            x:{ type:'time', time:{ parser:'YYYY-MM-DD', unit:'month', tooltipFormat:'YYYY-MM-DD' } },
+            x:{ type:'time', ticks:{ autoSkip:true, maxRotation:0 }, grid:{ color:'#ccc' } },
             y:{ beginAtZero:true, grid:{ color:'#eee' } }
           }
         }
