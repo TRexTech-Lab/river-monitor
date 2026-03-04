@@ -287,7 +287,10 @@ function buildQuadChartHtml(
             scales:{
               x: {
                 type:'time',
-                time: { unit: xUnit },
+                time: { 
+                  parser: 'YYYY-MM-DD HH:mm:ss', 
+                  unit: xUnit 
+                },
                 grid:{
                   color: function(context){
                     if(!highlightBoundary) return '#ccc';
