@@ -21,12 +21,10 @@ router.get("/waterlevel", async (req, res) => {
     const current10min = await riverService.getCurrentWaterLevel10min(obsId);
     const currentHour  = await riverService.getCurrentWaterLevelHour(obsId);
     const week         = await riverService.getWeekData(obsId);
-
-    // 🔥 Supabaseから30日分取得
-    const month        = await getMonthData(obsId);
+    const sixMonth   = await riverService.getsixMonthData(obsId);
 
     if (req.query.json) {
-      return res.json({ current10min, currentHour, week, month });
+      return res.json({ current10min, currentHour, week, sixMonth });
     }
 
     res.send(
@@ -43,9 +41,9 @@ router.get("/waterlevel", async (req, res) => {
         week.labels,
         week.data,
 
-        "30d-Water Level (m)",
-        month.labels,
-        month.data,
+        "6M-Water Level (m)",
+        sixMonth.labels,
+        sixMonth.data,
 
         obsId
       )
