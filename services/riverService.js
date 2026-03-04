@@ -177,12 +177,13 @@ function buildQuadChartHtml(
       chartHour = createChart('chartHour', lHr, dHr);
       chartWeek = createChart('chartWeek', lW, dW);
 
+      /*
       console.log("6M labels:", l6);
       console.log("6M data:", d6);
       chartSixMonth = createChart('chartSixMonth', l6_cut, d6);
+      */
 
 
-      /*
       const ctx6 = document.getElementById('chartSixMonth').getContext('2d');
       chartSixMonth = new Chart(ctx6, {
         type: 'line',
@@ -191,14 +192,16 @@ function buildQuadChartHtml(
         options: {
           responsive:true,
           maintainAspectRatio:false,
+          plugins:{ legend:{ display:false } }
+          /*
           plugins:{ legend:{ display:false } },
           scales:{
             x:{ type:'time', time:{ parser:'YYYY-MM-DD', unit:'month', tooltipFormat:'YYYY-MM-DD' }, ticks:{ autoSkip:true, maxRotation:0 }, grid:{ color:'#ccc' } },
             y:{ beginAtZero:true, grid:{ color:'#eee' } }
           }
+          */
         }
       });
-      */
     }
 
     async function fetchAllData(obsId){
