@@ -101,7 +101,7 @@ function sortAndFormat(values, isSixMonth) {
     if (!v.date) continue;
 
     if (isSixMonth) {
-      labels.push(v.date.replaceAll("/", "-"));
+      labels.push(v.obs_time || "").slice(0,10);
     } else {
       labels.push(v.obsTime || `${v.date} ${v.time}`);
     }
