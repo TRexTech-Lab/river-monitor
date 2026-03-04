@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const riverService = require("../services/riverService");
-const { saveWeekData, getMonthData } = require("../services/supabaseService"); 
+const { saveWeekData, getSixMonthDataFromDB  } = require("../services/supabaseService"); 
 const obsPoints = require("../services/obsPoints");
 
 // =========================
