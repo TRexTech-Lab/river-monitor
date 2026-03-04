@@ -264,14 +264,14 @@ function buildQuadChartHtml(
 <script>
 let chart10min, chartHour, chartWeek, chartSixMonth;
 
-function createChart(canvasId, labels, data, xUnit, highlightBoundary){
-  // ラベルを ISO形式に揃える
-  const safeLabels = labels.map(l => l.replace(/\\//g,'-'));
+function createChart(canvasId, labels, data, xUnit, highlightBoundary, trimLabels=false){
+  // 描画時にラベルをカットする場合
+  const displayLabels = trimLabels ? labels.map(l => l.slice(0,10)) : labels;
 
   return new Chart(document.getElementById(canvasId), {
     type:'line',
     data:{
-      labels: safeLabels,
+      labels: displayLabels,
       datasets:[{
         data: data,
         borderWidth: 2,
@@ -307,10 +307,7 @@ function createChart(canvasId, labels, data, xUnit, highlightBoundary){
             }
           }
         },
-        y:{
-          beginAtZero:true,
-          grid:{ color:'#eee' }
-        }
+        y:{ beginAtZero:true, grid:{ color:'#eee' } }
       }
     }
   });
@@ -325,7 +322,8 @@ function drawCharts(l10,d10,lHr,dHr,lW,dW,l6,d6){
   chart10min = createChart('chart10min', l10, d10, 'hour', false);
   chartHour = createChart('chartHour', lHr, dHr, 'day', true);
   chartWeek = createChart('chartWeek', lW, dW, 'day', true);
-  chartSixMonth = createChart('chartSixMonth', l6, d6, 'month', true);
+  // 6Mだけ描画時にカット
+  chartSixMonth = createChart('chartSixMonth', l6, d6, 'month', true, true);
 }
 
 async function fetchAllData(obsId){
@@ -345,6 +343,7 @@ document.getElementById('obsSelect').addEventListener('change', async (e)=>{
   );
 });
 
+// 初期描画
 drawCharts(
   ${JSON.stringify(labels10min)}, ${JSON.stringify(data10min)},
   ${JSON.stringify(labelsHour)}, ${JSON.stringify(dataHour)},
@@ -356,8 +355,6 @@ drawCharts(
 </html>
   `;
 }
-
-
 
 module.exports = {
   getCurrentWaterLevel10min,
