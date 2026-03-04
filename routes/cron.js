@@ -5,26 +5,37 @@ const { getWeekData } = require("../services/riverService");
 const { saveWeekData } = require("../services/supabaseService");
 const obsPoints = require("../services/obsPoints");
 
-// 🔐 まずは最初の1観測所でテスト
-const OBS_ID = obsPoints[0].obs_id;
-
+// =========================
+// 🔐 定期保存用エンドポイント
+// =========================
+// 例: /cron/save?key=xxxx
 router.get("/save", async (req, res) => {
   try {
-    // 簡易キー認証（UptimeRobotのURL ?key=xxx と一致させる）
+    // 簡易キー認証
     if (req.query.key !== process.env.CRON_SECRET) {
       return res.status(403).send("Forbidden");
     }
 
-    console.log("Cron save triggered:", OBS_ID);
+    console.log("Cron save triggered");
 
-    const weekData = await getWeekData(OBS_ID);
+    await Promise.all(
+      obsPoints.map(async (p) => {
+        try {
+          const weekData = await getWeekData(p.obs_id);
 
-    if (!weekData?.labels?.length) {
-      console.log("No week data found");
-      return res.send("No data");
-    }
+          if (!weekData?.labels?.length) {
+            console.log("No data:", p.obs_id);
+            return;
+          }
 
-    await saveWeekData(OBS_ID, weekData);
+          await saveWeekData(p.obs_id, weekData);
+          console.log("Saved:", p.obs_id);
+
+        } catch (err) {
+          console.error("Error saving:", p.obs_id, err.message);
+        }
+      })
+    );
 
     console.log("Cron save completed");
     res.send("Saved");
