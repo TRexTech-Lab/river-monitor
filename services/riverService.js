@@ -176,6 +176,9 @@ function buildQuadChartHtml(
       chart10min = createChart('chart10min', l10, d10);
       chartHour = createChart('chartHour', lHr, dHr);
       chartWeek = createChart('chartWeek', lW, dW);
+
+      console.log("6M labels:", l6);
+      console.log("6M data:", d6);
       chartSixMonth = createChart('chartSixMonth', l6, d6);
 
 
