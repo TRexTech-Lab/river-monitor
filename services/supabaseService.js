@@ -51,11 +51,11 @@ async function getMonthData(obsId) {
   try {
     const { data, error } = await supabase
       .from("water_levels")
-      .select("timestamp, value")
+      .select("obs_time, water_level")
       .eq("obs_id", obsId)
-      .order("timestamp", { ascending: true })
+      .order("obs_time", { ascending: true })
       .gte(
-        "timestamp",
+        "obs_time",
         new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
       );
 
@@ -65,8 +65,8 @@ async function getMonthData(obsId) {
     }
 
     return {
-      labels: data.map(d => d.timestamp),
-      data: data.map(d => d.value)
+      labels: data.map(d => d.obs_time),
+      data: data.map(d => d.water_level)
     };
 
   } catch (err) {
@@ -74,7 +74,6 @@ async function getMonthData(obsId) {
     return { labels: [], data: [] };
   }
 }
-
 
 
 module.exports = { 
