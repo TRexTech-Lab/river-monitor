@@ -224,58 +224,27 @@ function buildQuadChartHtml(
 }
 
 /////////////////////////////////
-function buildQuadChartHtml_new(
-  title10min, labels10min, data10min,
-  titleHour, labelsHour, dataHour,
-  titleWeek, labelsWeek, dataWeek,
-  titleSixMonth, labelsSixMonth, dataSixMonth,
-  currentObsId
-) {
-  const optionsHtml = obsPoints.map(p =>
-    `<option value="${p.obs_id}" ${p.obs_id===currentObsId?"selected":""}>${p.name}</option>`
-  ).join("\n");
+function drawCharts(l10,d10,lHr,dHr,lW,dW,l6,d6){
+  if(chart10min) chart10min.destroy();
+  if(chartHour) chartHour.destroy();
+  if(chartWeek) chartWeek.destroy();
+  if(chartSixMonth) chartSixMonth.destroy();
 
-  return `
-<html>
-<head>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-  body { font-family: sans-serif; text-align: center; }
-  h2 { font-size: 18px; margin: 20px 0 10px; }
-  .chart-container { width: 90%; max-width: 800px; height: 400px; margin: 20px auto; }
-  canvas { width: 100% !important; height: 100% !important; }
-  select { font-size: 16px; margin: 10px; }
-</style>
-</head>
-<body>
-<label>観測ポイントを選択:</label>
-<select id="obsSelect">${optionsHtml}</select>
+  const l6_cut = l6.map(l => l.slice(0,10)); // YYYY-MM-DD
 
-<h2>${title10min}</h2>
-<div class="chart-container"><canvas id="chart10min"></canvas></div>
+  // 10分・1時間・1週間は従来通り
+  chart10min = createChart('chart10min', l10, d10);
+  chartHour = createChart('chartHour', lHr, dHr);
+  chartWeek = createChart('chartWeek', lW, dW);
 
-<h2>${titleHour}</h2>
-<div class="chart-container"><canvas id="chartHour"></canvas></div>
-
-<h2>${titleWeek}</h2>
-<div class="chart-container"><canvas id="chartWeek"></canvas></div>
-
-<h2>${titleSixMonth}</h2>
-<div class="chart-container"><canvas id="chartSixMonth"></canvas></div>
-
-<script>
-let chart10min, chartHour, chartWeek, chartSixMonth;
-
-function createChart(canvasId, labels, data, xUnit, highlightBoundary, trimLabels=false){
-  // 描画時にラベルをカットする場合
-  const displayLabels = trimLabels ? labels.map(l => l.slice(0,10)) : labels;
-
-  return new Chart(document.getElementById(canvasId), {
-    type:'line',
-    data:{
-      labels: displayLabels,
-      datasets:[{
-        data: data,
+  // 6Mだけ時間軸を月単位にして描画
+  const ctx6 = document.getElementById('chartSixMonth').getContext('2d');
+  chartSixMonth = new Chart(ctx6, {
+    type: 'line',
+    data: {
+      labels: l6_cut,
+      datasets: [{
+        data: d6,
         borderWidth: 2,
         tension: 0.2,
         borderColor: 'blue',
@@ -283,39 +252,28 @@ function createChart(canvasId, labels, data, xUnit, highlightBoundary, trimLabel
         fill: true
       }]
     },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      plugins:{ legend:{ display:false } },
-      scales:{
-        x:{
-          type:'time',
-          time:{ parser:'YYYY-MM-DD HH:mm', unit: xUnit },
-          ticks:{ autoSkip:true, maxRotation:0 },
-          grid:{
-            color: function(context){
-              if(!highlightBoundary) return '#ccc';
-              const tickDate = new Date(context.tick.value);
-              if(xUnit==='day' && tickDate.getHours()===0) return '#888';
-              if(xUnit==='month' && tickDate.getDate()===1) return '#888';
-              return '#ccc';
-            },
-            lineWidth: function(context){
-              if(!highlightBoundary) return 1;
-              const tickDate = new Date(context.tick.value);
-              if(xUnit==='day' && tickDate.getHours()===0) return 2;
-              if(xUnit==='month' && tickDate.getDate()===1) return 2;
-              return 1;
-            }
-          }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            parser: 'YYYY-MM-DD',
+            unit: 'month',
+            tooltipFormat: 'YYYY-MM-DD'
+          },
+          ticks: { autoSkip: true, maxRotation: 0 },
+          grid: { color: '#ccc' }
         },
-        y:{ beginAtZero:true, grid:{ color:'#eee' } }
+        y: { beginAtZero: true, grid: { color: '#eee' } }
       }
     }
   });
 }
 
-function drawCharts(l10,d10,lHr,dHr,lW,dW,l6,d6){
+function drawCharts_old(l10,d10,lHr,dHr,lW,dW,l6,d6){
   if(chart10min) chart10min.destroy();
   if(chartHour) chartHour.destroy();
   if(chartWeek) chartWeek.destroy();
