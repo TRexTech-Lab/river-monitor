@@ -47,4 +47,37 @@ async function saveWeekData(obsId, weekData) {
   }
 }
 
-module.exports = { saveWeekData };
+async function getMonthData(obsId) {
+  try {
+    const { data, error } = await supabase
+      .from("water_levels")
+      .select("timestamp, value")
+      .eq("obs_id", obsId)
+      .order("timestamp", { ascending: true })
+      .gte(
+        "timestamp",
+        new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+      );
+
+    if (error) {
+      console.error("Supabase month fetch error:", error.message);
+      return { labels: [], data: [] };
+    }
+
+    return {
+      labels: data.map(d => d.timestamp),
+      data: data.map(d => d.value)
+    };
+
+  } catch (err) {
+    console.error("Supabase month fetch error:", err.message);
+    return { labels: [], data: [] };
+  }
+}
+
+
+
+module.exports = { 
+  saveWeekData,
+  getMonthData
+};
