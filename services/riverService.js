@@ -176,7 +176,10 @@ function buildQuadChartHtml(
       chart10min = createChart('chart10min', l10, d10);
       chartHour = createChart('chartHour', lHr, dHr);
       chartWeek = createChart('chartWeek', lW, dW);
+      chartSixMonth = createChart('chartSixMonth', l6, d6);
 
+
+      /*
       const ctx6 = document.getElementById('chartSixMonth').getContext('2d');
       chartSixMonth = new Chart(ctx6, {
         type: 'line',
@@ -192,6 +195,7 @@ function buildQuadChartHtml(
           }
         }
       });
+      */
     }
 
     async function fetchAllData(obsId){
