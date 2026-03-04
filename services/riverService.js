@@ -179,7 +179,7 @@ function buildQuadChartHtml(
 
       console.log("6M labels:", l6);
       console.log("6M data:", d6);
-      chartSixMonth = createChart('chartSixMonth', l6, d6);
+      chartSixMonth = createChart('chartSixMonth', l6_cut, d6);
 
 
       /*
