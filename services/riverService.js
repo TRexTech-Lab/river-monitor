@@ -87,27 +87,7 @@ async function getWeekData(obsId) {
 }
 
 // --- 過去6ヶ月 ---
-async function getSixMonthDataFromDB(obsId) {
-  const sixMonthsAgo = new Date();
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-  const { data, error } = await supabase
-    .from("water_levels")
-    .select("obs_time, water_level")
-    .eq("obs_id", obsId)
-    .gte("obs_time", sixMonthsAgo.toISOString())
-    .order("obs_time", { ascending: true });
-
-  if (error) {
-    console.error("Supabase 6month fetch error:", error.message);
-    return { labels: [], data: [] };
-  }
-
-  return {
-    labels: data.map(d => d.obs_time),
-    data: data.map(d => d.water_level)
-  };
-}
 
 // --- 共通整形 ---
 function sortAndFormat(values, isSixMonth) {
@@ -245,6 +225,5 @@ module.exports = {
   getCurrentWaterLevel10min,
   getCurrentWaterLevelHour,
   getWeekData,
-  getSixMonthDataFromDB,
   buildQuadChartHtml
 };
