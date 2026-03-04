@@ -83,7 +83,7 @@ async function getWeekData(obsId) {
     }
   }
 
-  return sortAndFormat(allValues);
+  return sortAndFormat(allValues, false);
 }
 
 // --- 過去6ヶ月 ---
@@ -97,7 +97,7 @@ async function getSixMonthData(obsId) {
 
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = "01"; // 月初を基準
+    const dd = "01"; // 月初基準
 
     const dateStr = `${yyyy}${mm}${dd}`;
     const url = `https://www.river.go.jp/kawabou/file/files/tmlist/past/stg/${dateStr}/${obsId}.json`;
@@ -110,11 +110,12 @@ async function getSixMonthData(obsId) {
     }
   }
 
-  return sortAndFormat(allValues);
+  return sortAndFormat(allValues, true); // ←6ヶ月は日付整理モード
 }
 
 // --- ソート＆整形共通処理 ---
-function sortAndFormat(values) {
+// second argument: isSixMonth
+function sortAndFormat(values, isSixMonth) {
   const sorted = values.sort((a, b) => {
     const aKey = (a.date || "").replaceAll("/", "") + (a.time || "").replace(":", "");
     const bKey = (b.date || "").replaceAll("/", "") + (b.time || "").replace(":", "");
@@ -125,8 +126,15 @@ function sortAndFormat(values) {
   const data = [];
 
   for (const v of sorted) {
-    const label = v.obsTime || `${v.date} ${v.time}`;
-    labels.push(label);
+    if (!v.date) continue;
+
+    if (isSixMonth) {
+      // 6ヶ月は日付のみ
+      labels.push(v.date.replaceAll("/", "-"));
+    } else {
+      labels.push(v.obsTime || `${v.date} ${v.time}`);
+    }
+
     data.push(normalizeStg(v));
   }
 
@@ -177,35 +185,37 @@ function buildQuadChartHtml(
     <script>
       let chart10min, chartHour, chartWeek, chartSixMonth;
 
+      function createChart(canvasId, labels, data){
+        return new Chart(document.getElementById(canvasId), {
+          type:'line',
+          data:{
+            labels:labels,
+            datasets:[{
+              data:data,
+              borderWidth:2,
+              tension:0.2
+            }]
+          },
+          options:{
+            responsive:true,
+            maintainAspectRatio:false,
+            plugins:{
+              legend:{ display:false }  // ←レジェンド完全非表示
+            }
+          }
+        });
+      }
+
       function drawCharts(l10,d10,lHr,dHr,lW,dW,l6,d6){
         if(chart10min) chart10min.destroy();
         if(chartHour) chartHour.destroy();
         if(chartWeek) chartWeek.destroy();
         if(chartSixMonth) chartSixMonth.destroy();
 
-        chart10min = new Chart(document.getElementById('chart10min'), {
-          type:'line',
-          data:{ labels:l10, datasets:[{data:d10, borderWidth:2, tension:0.2}]},
-          options:{ responsive:true, maintainAspectRatio:false }
-        });
-
-        chartHour = new Chart(document.getElementById('chartHour'), {
-          type:'line',
-          data:{ labels:lHr, datasets:[{data:dHr, borderWidth:2, tension:0.2}]},
-          options:{ responsive:true, maintainAspectRatio:false }
-        });
-
-        chartWeek = new Chart(document.getElementById('chartWeek'), {
-          type:'line',
-          data:{ labels:lW, datasets:[{data:dW, borderWidth:2, tension:0.2}]},
-          options:{ responsive:true, maintainAspectRatio:false }
-        });
-
-        chartSixMonth = new Chart(document.getElementById('chartSixMonth'), {
-          type:'line',
-          data:{ labels:l6, datasets:[{data:d6, borderWidth:2, tension:0.2}]},
-          options:{ responsive:true, maintainAspectRatio:false }
-        });
+        chart10min   = createChart('chart10min', l10, d10);
+        chartHour    = createChart('chartHour', lHr, dHr);
+        chartWeek    = createChart('chartWeek', lW, dW);
+        chartSixMonth= createChart('chartSixMonth', l6, d6);
       }
 
       drawCharts(
