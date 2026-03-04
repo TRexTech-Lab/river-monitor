@@ -43,7 +43,7 @@ router.get("/waterlevel", async (req, res) => {
         week.labels,
         week.data,
 
-        "30d-Saved Data (Supabase)",
+        "30d-Water Level (m)",
         month.labels,
         month.data,
 
