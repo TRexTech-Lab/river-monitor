@@ -87,30 +87,26 @@ async function getWeekData(obsId) {
 }
 
 // --- 過去6ヶ月 ---
-async function getSixMonthData(obsId) {
-  const today = new Date();
-  let allValues = [];
+async function getSixMonthDataFromDB(obsId) {
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-  for (let m = 0; m < 6; m++) {
-    const d = new Date(today);
-    d.setMonth(today.getMonth() - m);
+  const { data, error } = await supabase
+    .from("water_levels")
+    .select("obs_time, water_level")
+    .eq("obs_id", obsId)
+    .gte("obs_time", sixMonthsAgo.toISOString())
+    .order("obs_time", { ascending: true });
 
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = "01";
-
-    const dateStr = `${yyyy}${mm}${dd}`;
-    const url = `https://www.river.go.jp/kawabou/file/files/tmlist/past/stg/${dateStr}/${obsId}.json`;
-
-    try {
-      const res = await axios.get(url);
-      allValues.push(...(res.data.pastValues || []));
-    } catch (err) {
-      console.warn("6Month data fetch error:", err.message);
-    }
+  if (error) {
+    console.error("Supabase 6month fetch error:", error.message);
+    return { labels: [], data: [] };
   }
 
-  return sortAndFormat(allValues, true);
+  return {
+    labels: data.map(d => d.obs_time),
+    data: data.map(d => d.water_level)
+  };
 }
 
 // --- 共通整形 ---
@@ -249,6 +245,6 @@ module.exports = {
   getCurrentWaterLevel10min,
   getCurrentWaterLevelHour,
   getWeekData,
-  getSixMonthData,
+  getSixMonthDataFromDB,
   buildQuadChartHtml
 };
