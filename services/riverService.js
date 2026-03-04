@@ -8,7 +8,7 @@ async function getCurrentTime() {
   return res.data.obsValue?.obsTime || res.data.crntObsTime;
 }
 
-// --- 水位の正規化 ---
+// --- 水位正規化 ---
 function normalizeStg(v) {
   if (!v) return null;
   if (v.stgCcd && v.stgCcd !== 0) return null;
@@ -17,7 +17,7 @@ function normalizeStg(v) {
   return Number(v.stg);
 }
 
-// --- 10分ごと ---
+// --- 10分 ---
 async function getCurrentWaterLevel10min(obsId) {
   try {
     const currentTime = await getCurrentTime();
@@ -38,7 +38,7 @@ async function getCurrentWaterLevel10min(obsId) {
   }
 }
 
-// --- 1時間ごと ---
+// --- 1時間 ---
 async function getCurrentWaterLevelHour(obsId) {
   try {
     const currentTime = await getCurrentTime();
@@ -97,7 +97,7 @@ async function getSixMonthData(obsId) {
 
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = "01"; // 月初基準
+    const dd = "01";
 
     const dateStr = `${yyyy}${mm}${dd}`;
     const url = `https://www.river.go.jp/kawabou/file/files/tmlist/past/stg/${dateStr}/${obsId}.json`;
@@ -110,11 +110,10 @@ async function getSixMonthData(obsId) {
     }
   }
 
-  return sortAndFormat(allValues, true); // ←6ヶ月は日付整理モード
+  return sortAndFormat(allValues, true);
 }
 
-// --- ソート＆整形共通処理 ---
-// second argument: isSixMonth
+// --- 共通整形 ---
 function sortAndFormat(values, isSixMonth) {
   const sorted = values.sort((a, b) => {
     const aKey = (a.date || "").replaceAll("/", "") + (a.time || "").replace(":", "");
@@ -129,7 +128,6 @@ function sortAndFormat(values, isSixMonth) {
     if (!v.date) continue;
 
     if (isSixMonth) {
-      // 6ヶ月は日付のみ
       labels.push(v.date.replaceAll("/", "-"));
     } else {
       labels.push(v.obsTime || `${v.date} ${v.time}`);
@@ -167,7 +165,7 @@ function buildQuadChartHtml(
     </style>
   </head>
   <body>
-    <label for="obsSelect">観測ポイントを選択:</label>
+    <label>観測ポイントを選択:</label>
     <select id="obsSelect">${optionsHtml}</select>
 
     <h2>${title10min}</h2>
@@ -200,7 +198,7 @@ function buildQuadChartHtml(
             responsive:true,
             maintainAspectRatio:false,
             plugins:{
-              legend:{ display:false }  // ←レジェンド完全非表示
+              legend:{ display:false }
             }
           }
         });
@@ -212,11 +210,28 @@ function buildQuadChartHtml(
         if(chartWeek) chartWeek.destroy();
         if(chartSixMonth) chartSixMonth.destroy();
 
-        chart10min   = createChart('chart10min', l10, d10);
-        chartHour    = createChart('chartHour', lHr, dHr);
-        chartWeek    = createChart('chartWeek', lW, dW);
-        chartSixMonth= createChart('chartSixMonth', l6, d6);
+        chart10min = createChart('chart10min', l10, d10);
+        chartHour = createChart('chartHour', lHr, dHr);
+        chartWeek = createChart('chartWeek', lW, dW);
+        chartSixMonth = createChart('chartSixMonth', l6, d6);
       }
+
+      async function fetchAllData(obsId){
+        const res = await fetch('/waterlevel?obsId=' + obsId + '&json=1');
+        return await res.json();
+      }
+
+      document.getElementById('obsSelect').addEventListener('change', async (e)=>{
+        const obsId = e.target.value;
+        const json = await fetchAllData(obsId);
+
+        drawCharts(
+          json.current10min.labels, json.current10min.data,
+          json.currentHour.labels,  json.currentHour.data,
+          json.week.labels,         json.week.data,
+          json.sixMonth.labels,     json.sixMonth.data
+        );
+      });
 
       drawCharts(
         ${JSON.stringify(labels10min)}, ${JSON.stringify(data10min)},
