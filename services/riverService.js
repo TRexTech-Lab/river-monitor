@@ -174,11 +174,14 @@ function buildFiveChartHtml(
       if(chart1M) chart1M.destroy();
       if(chart6M) chart6M.destroy();
 
+      const l1_cut = l1.map(l => l.slice(0,10));
+      const l6_cut = l6.map(l => l.slice(0,10));
+
       chart8h = createChart('chart8h', l8, d8);
       chart3d = createChart('chart3d', l3, d3);
       chart7d = createChart('chart7d', l7, d7);
-      chart1M = createChart('chart1M', l1, d1);
-      chart6M = createChart('chart6M', l6, d6);
+      chart1M = createChart('chart1M', l1_cut, d1);
+      chart6M = createChart('chart6M', l6_cut, d6);
     }
 
     async function fetchAllData(obsId){
