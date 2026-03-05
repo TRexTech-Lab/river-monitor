@@ -14,9 +14,9 @@ router.get("/waterlevel", async (req, res) => {
 
   try {
 
-    const h8 = await riverService.getCurrentWaterLevel10min(obsId);
-    const d3 = await riverService.getCurrentWaterLevelHour(obsId);
-    const d7 = await riverService.getWeekData(obsId);
+    const h8 = await riverService.getWaterLevel8h(obsId);
+    const d3 = await riverService.getWaterLevel3d(obsId);
+    const d7 = await riverService.getWaterLevel7d(obsId);
 
     const m1 = await getMonthDataFromDB(obsId);
     const m6 = await getSixMonthDataFromDB(obsId);
