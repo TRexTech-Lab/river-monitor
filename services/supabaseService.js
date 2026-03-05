@@ -5,11 +5,10 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
-// =========================
+// ============================
 // 7日データ保存
-// =========================
+// ============================
 async function saveWeekData(obsId, weekData) {
-
   if (!weekData?.labels?.length) return;
 
   const rows = weekData.labels.map((t, i) => ({
@@ -29,11 +28,10 @@ async function saveWeekData(obsId, weekData) {
   }
 }
 
-// =========================
-// 1か月取得
-// =========================
-async function getMonthData(obsId){
-
+// ============================
+// 1ヶ月取得
+// ============================
+async function getMonthDataFromDB(obsId) {
   const since = new Date();
   since.setDate(since.getDate() - 30);
 
@@ -55,11 +53,10 @@ async function getMonthData(obsId){
   };
 }
 
-// =========================
-// 6か月取得
-// =========================
-async function getSixMonthData(obsId){
-
+// ============================
+// 6ヶ月取得
+// ============================
+async function getSixMonthDataFromDB(obsId) {
   const since = new Date();
   since.setMonth(since.getMonth() - 6);
 
@@ -83,6 +80,6 @@ async function getSixMonthData(obsId){
 
 module.exports = {
   saveWeekData,
-  getMonthData,
-  getSixMonthData
+  getMonthDataFromDB,
+  getSixMonthDataFromDB
 };
