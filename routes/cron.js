@@ -24,6 +24,7 @@ router.get("/save", async (req, res) => {
       try {
         // --- weekData を取得 ---
         const weekData = await getWeekData(p.obs_id);
+        console.log("weekData sample:", weekData);
 
         // 空配列ならスキップ
         const dataArray = weekData.values || [];
