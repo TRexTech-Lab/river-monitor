@@ -11,7 +11,7 @@ const obsPoints = require("../services/obsPoints");
 router.get("/save", async (req, res) => {
   try {
 
-    if (req.query.key !== process.env.CRON_SECRET) {
+    if (req.query.key !== process.env.CRON_KEY) {
       return res.status(403).send("Forbidden");
     }
 
