@@ -27,9 +27,20 @@ router.get("/save", async (req, res) => {
           continue;
         }
 
-        await saveWeekData(p.obs_id, weekData);
+       // await saveWeekData(p.obs_id, weekData);
+        // --- 重複を削除 ---
+        const uniqueWeekData = Array.from(
+        new Map(weekData.map(r => [r.obs_time, r])).values()
+      );
 
-        console.log("Saved:", p.obs_id);
+      // --- Supabase に upsert ---
+      await supabase
+        .from('water_levels')
+        .upsert(uniqueWeekData.map(r => ({ ...r, obs_id: p.obs_id })), {
+          onConflict: ['obs_id', 'obs_time']
+        });
+        
+      console.log("Saved:", p.obs_id);
 
       } catch (err) {
         console.error("Error saving:", p.obs_id, err.message);
