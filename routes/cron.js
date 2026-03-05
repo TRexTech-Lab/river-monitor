@@ -26,23 +26,27 @@ router.get("/save", async (req, res) => {
         const weekData = await getWeekData(p.obs_id);
         console.log("weekData sample:", weekData);
 
-        // 空配列ならスキップ
-        const dataArray = weekData.values || [];
-        if (!dataArray.length) {
+        const labels = weekData.labels || [];
+        const data = weekData.data || [];
+
+        if (!labels.length || !data.length) {
           console.log("No data:", p.obs_id);
           continue;
         }
 
+        // --- labels と data を結合して Supabase に入れる形に整形 ---
+        const rows = labels.map((time, i) => ({
+          obs_id: p.obs_id,
+          obs_time: time,
+          stg: data[i],
+        }));
+
         // --- Supabase に丸ごと upsert ---
-        // obs_id を各行に追加して、onConflict で重複は自動回避
         await supabase
           .from("water_levels")
-          .upsert(
-            dataArray.map(r => ({ ...r, obs_id: p.obs_id })),
-            { onConflict: ["obs_id", "obs_time"] }
-          );
+          .upsert(rows, { onConflict: ["obs_id", "obs_time"] });
 
-        console.log("Saved:", p.obs_id);
+        console.log(`Saved: ${p.obs_id} (${rows.length} rows)`);
 
       } catch (err) {
         console.error("Error saving:", p.obs_id, err.message);
