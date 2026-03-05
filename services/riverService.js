@@ -171,33 +171,17 @@ function buildQuadChartHtml(
       if(chartWeek) chartWeek.destroy();
       if(chartSixMonth) chartSixMonth.destroy();
 
-      const l6_cut = l6.map(l => (l || "").trim().slice(0,10));
+      const l6_cut = l6.map(l => (l||"").trim().slice(0,10));
 
       chart10min = createChart('chart10min', l10, d10);
-      chartHour = createChart('chartHour', lHr, dHr);
-      chartWeek = createChart('chartWeek', lW, dW);
-
-      /*
-      console.log("6M labels:", l6);
-      console.log("6M data:", d6);
-      chartSixMonth = createChart('chartSixMonth', l6_cut, d6);
-      */
-
+      chartHour  = createChart('chartHour', lHr, dHr);
+      chartWeek  = createChart('chartWeek', lW, dW);
 
       const ctx6 = document.getElementById('chartSixMonth').getContext('2d');
       chartSixMonth = new Chart(ctx6, {
         type: 'line',
         data: { labels: l6_cut, datasets:[{ data:d6, borderWidth:2, tension:0.2, borderColor:'blue', backgroundColor:'rgba(0,0,255,0.1)', fill:true }] },
-
-        options: {
-          responsive:true,
-          maintainAspectRatio:false,
-          plugins:{ legend:{ display:false } },
-          scales:{
-    //        x:{ type:'time', time:{ parser:'YYYY-MM-DD', unit:'month', tooltipFormat:'YYYY-MM-DD' }, ticks:{ autoSkip:true, maxRotation:0 }, grid:{ color:'#ccc' } },
-            y:{ beginAtZero:false, grid:{ color:'#eee' } }
-          }
-        }
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } }
       });
     }
 
@@ -206,10 +190,15 @@ function buildQuadChartHtml(
       return await res.json();
     }
 
-    document.getElementById('obsSelect').addEventListener('change', async (e)=>{
-      const obsId = e.target.value;
-      const json = await fetchAllData(obsId);
+    const obsSelect = document.getElementById('obsSelect');
 
+    // 前回選択を復元
+    const savedObsId = localStorage.getItem('selectedObsId');
+    const initialObsId = savedObsId || obsSelect.value;
+    obsSelect.value = initialObsId;
+
+    // 初期描画
+    fetchAllData(initialObsId).then(json => {
       drawCharts(
         json.current10min.labels, json.current10min.data,
         json.currentHour.labels,  json.currentHour.data,
@@ -218,13 +207,18 @@ function buildQuadChartHtml(
       );
     });
 
-    // 初期描画
-    drawCharts(
-      ${JSON.stringify(labels10min)}, ${JSON.stringify(data10min)},
-      ${JSON.stringify(labelsHour)}, ${JSON.stringify(dataHour)},
-      ${JSON.stringify(labelsWeek)}, ${JSON.stringify(dataWeek)},
-      ${JSON.stringify(labelsSixMonth)}, ${JSON.stringify(dataSixMonth)}
-    );
+    // 選択変更時
+    obsSelect.addEventListener('change', async (e)=>{
+      const obsId = e.target.value;
+      localStorage.setItem('selectedObsId', obsId); // 保存
+      const json = await fetchAllData(obsId);
+      drawCharts(
+        json.current10min.labels, json.current10min.data,
+        json.currentHour.labels,  json.currentHour.data,
+        json.week.labels,         json.week.data,
+        json.sixMonth.labels,     json.sixMonth.data
+      );
+    });
   </script>
 </body>
 </html>
