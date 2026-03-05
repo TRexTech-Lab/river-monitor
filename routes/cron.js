@@ -22,29 +22,27 @@ router.get("/save", async (req, res) => {
 
     for (const p of obsPoints) {
       try {
+        // --- weekData を取得 ---
         const weekData = await getWeekData(p.obs_id);
 
-        // sortAndFormat の返り値から値の配列を取得
+        // 空配列ならスキップ
         const dataArray = weekData.values || [];
-
         if (!dataArray.length) {
           console.log("No data:", p.obs_id);
           continue;
         }
 
-        // --- 重複を削除 (obs_time ごとに最後の1件だけ残す) ---
-        const uniqueWeekData = Array.from(
-          new Map(dataArray.map(r => [r.obs_time, r])).values()
-        );
-
-        // --- Supabase に upsert ---
+        // --- Supabase に丸ごと upsert ---
+        // obs_id を各行に追加して、onConflict で重複は自動回避
         await supabase
           .from("water_levels")
-          .upsert(uniqueWeekData.map(r => ({ ...r, obs_id: p.obs_id })), {
-            onConflict: ["obs_id", "obs_time"],
-          });
+          .upsert(
+            dataArray.map(r => ({ ...r, obs_id: p.obs_id })),
+            { onConflict: ["obs_id", "obs_time"] }
+          );
 
         console.log("Saved:", p.obs_id);
+
       } catch (err) {
         console.error("Error saving:", p.obs_id, err.message);
       }
@@ -52,6 +50,7 @@ router.get("/save", async (req, res) => {
 
     console.log("Cron save completed");
     res.send("Saved");
+
   } catch (err) {
     console.error("Cron save error:", err);
     res.status(500).send("Error");
