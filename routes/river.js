@@ -1,11 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const riverService = require("../services/riverService");
 
-const {
-  getMonthDataFromDB,
-  getSixMonthDataFromDB
-} = require("../services/supabaseService");
+const riverService = require("../services/riverService");
+const { getMonthDataFromDB, getSixMonthDataFromDB } = require("../services/supabaseService");
 
 // =========================
 // 健康チェック
@@ -15,7 +12,7 @@ router.get("/health", (req, res) => {
 });
 
 // =========================
-// グラフ表示（5枚表示）
+// グラフ表示（5枚）
 // =========================
 router.get("/waterlevel", async (req, res) => {
 
@@ -23,12 +20,12 @@ router.get("/waterlevel", async (req, res) => {
 
   try {
 
-    const h8  = await riverService.getCurrentWaterLevel10min(obsId);
-    const d3  = await riverService.getCurrentWaterLevelHour(obsId);
-    const d7  = await riverService.getWeekData(obsId);
+    const h8 = await riverService.getWaterLevel8h(obsId);
+    const d3 = await riverService.getWaterLevel3d(obsId);
+    const d7 = await riverService.getWaterLevel7d(obsId);
 
-    const m1  = await getMonthDataFromDB(obsId);
-    const m6  = await getSixMonthDataFromDB(obsId);
+    const m1 = await getMonthDataFromDB(obsId);
+    const m6 = await getSixMonthDataFromDB(obsId);
 
     if (req.query.json) {
       return res.json({
@@ -43,23 +40,23 @@ router.get("/waterlevel", async (req, res) => {
     res.send(
       riverService.buildFiveChartHtml(
 
-        "8h-Water Level (m)",
+        "8h Water Level (m)",
         h8.labels,
         h8.data,
 
-        "3d-Water Level (m)",
+        "3d Water Level (m)",
         d3.labels,
         d3.data,
 
-        "7d-Water Level (m)",
+        "7d Water Level (m)",
         d7.labels,
         d7.data,
 
-        "1M-Water Level (m)",
+        "1M Water Level (m)",
         m1.labels,
         m1.data,
 
-        "6M-Water Level (m)",
+        "6M Water Level (m)",
         m6.labels,
         m6.data,
 
@@ -73,6 +70,7 @@ router.get("/waterlevel", async (req, res) => {
 
     res.status(500).send("Error fetching water level data");
   }
+
 });
 
 module.exports = router;
