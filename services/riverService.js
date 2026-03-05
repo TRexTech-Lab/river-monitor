@@ -1,6 +1,5 @@
 const axios = require("axios");
 const obsPoints = require("./obsPoints");
-const { getMonthDataFromDB, getSixMonthDataFromDB, saveHourData } = require("./supabaseService");
 
 // --- 現在時刻取得 ---
 async function getCurrentTime() {
@@ -18,7 +17,7 @@ function normalizeStg(v) {
   return Number(v.stg);
 }
 
-// --- 8h (10分単位) ---
+// --- 8h: 10分単位 ---
 async function getWaterLevel8h(obsId) {
   try {
     const currentTime = await getCurrentTime();
@@ -39,7 +38,7 @@ async function getWaterLevel8h(obsId) {
   }
 }
 
-// --- 3d (1時間単位) ---
+// --- 3d: 1時間単位 ---
 async function getWaterLevel3d(obsId) {
   try {
     const currentTime = await getCurrentTime();
@@ -49,12 +48,6 @@ async function getWaterLevel3d(obsId) {
 
     const res = await axios.get(url);
     const raw = res.data.hrValues || [];
-
-    // 保存もここで可能（保険）
-    await saveHourData(obsId, {
-      labels: raw.map(v => v.obsTime),
-      data: raw.map(v => normalizeStg(v))
-    });
 
     return {
       labels: raw.map(v => v.obsTime).reverse(),
@@ -67,7 +60,7 @@ async function getWaterLevel3d(obsId) {
 }
 
 // --- 過去7日 ---
-async function getWaterLevel7d(obsId) {
+async function getWeekData(obsId) {
   const today = new Date();
   let allValues = [];
 
@@ -86,7 +79,7 @@ async function getWaterLevel7d(obsId) {
       const res = await axios.get(url);
       allValues.push(...(res.data.pastValues || []));
     } catch (err) {
-      console.warn("7d fetch error:", err.message);
+      console.warn("Week data fetch error:", err.message);
     }
   }
 
@@ -107,7 +100,9 @@ function sortAndFormat(values, isSixMonth) {
   for (const v of sorted) {
     if (!v.date) continue;
     if (isSixMonth) {
-      labels.push((v.obs_time || "").slice(0, 10));
+      if (v.obs_time){
+        labels.push((v.obs_time || "").slice(0,10));
+      }
     } else {
       labels.push(v.obsTime || `${v.date} ${v.time}`);
     }
@@ -117,13 +112,13 @@ function sortAndFormat(values, isSixMonth) {
   return { labels, data };
 }
 
-// --- HTML生成 (5枚グラフ対応) ---
+// --- HTML生成 ---
 function buildFiveChartHtml(
   title8h, labels8h, data8h,
   title3d, labels3d, data3d,
   title7d, labels7d, data7d,
-  title1m, labels1m, data1m,
-  title6m, labels6m, data6m,
+  title1M, labels1M, data1M,
+  title6M, labels6M, data6M,
   currentObsId
 ) {
   const optionsHtml = obsPoints.map(p =>
@@ -155,14 +150,14 @@ function buildFiveChartHtml(
   <h2>${title7d}</h2>
   <div class="chart-container"><canvas id="chart7d"></canvas></div>
 
-  <h2>${title1m}</h2>
-  <div class="chart-container"><canvas id="chart1m"></canvas></div>
+  <h2>${title1M}</h2>
+  <div class="chart-container"><canvas id="chart1M"></canvas></div>
 
-  <h2>${title6m}</h2>
-  <div class="chart-container"><canvas id="chart6m"></canvas></div>
+  <h2>${title6M}</h2>
+  <div class="chart-container"><canvas id="chart6M"></canvas></div>
 
   <script>
-    let chart8h, chart3d, chart7d, chart1m, chart6m;
+    let chart8h, chart3d, chart7d, chart1M, chart6M;
 
     function createChart(canvasId, labels, data){
       return new Chart(document.getElementById(canvasId), {
@@ -176,20 +171,14 @@ function buildFiveChartHtml(
       if(chart8h) chart8h.destroy();
       if(chart3d) chart3d.destroy();
       if(chart7d) chart7d.destroy();
-      if(chart1m) chart1m.destroy();
-      if(chart6m) chart6m.destroy();
+      if(chart1M) chart1M.destroy();
+      if(chart6M) chart6M.destroy();
 
       chart8h = createChart('chart8h', l8, d8);
       chart3d = createChart('chart3d', l3, d3);
       chart7d = createChart('chart7d', l7, d7);
-      chart1m = createChart('chart1m', l1, d1);
-
-      const ctx6 = document.getElementById('chart6m').getContext('2d');
-      chart6m = new Chart(ctx6, {
-        type: 'line',
-        data: { labels: l6.map(l=>l.slice(0,10)), datasets:[{ data:d6, borderWidth:2, tension:0.2, borderColor:'blue', backgroundColor:'rgba(0,0,255,0.1)', fill:true }] },
-        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } }
-      });
+      chart1M = createChart('chart1M', l1, d1);
+      chart6M = createChart('chart6M', l6, d6);
     }
 
     async function fetchAllData(obsId){
@@ -198,6 +187,7 @@ function buildFiveChartHtml(
     }
 
     const obsSelect = document.getElementById('obsSelect');
+
     const savedObsId = localStorage.getItem('selectedObsId');
     const initialObsId = savedObsId || obsSelect.value;
     obsSelect.value = initialObsId;
@@ -233,8 +223,6 @@ function buildFiveChartHtml(
 module.exports = {
   getWaterLevel8h,
   getWaterLevel3d,
-  getWaterLevel7d,
-  getMonthDataFromDB,
-  getSixMonthDataFromDB,
+  getWeekData,
   buildFiveChartHtml
 };
