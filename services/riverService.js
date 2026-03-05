@@ -1,233 +1,97 @@
-const axios = require("axios");
-const obsPoints = require("./obsPoints");
+const { createClient } = require("@supabase/supabase-js");
 
-// --- 現在時刻取得 ---
-async function getCurrentTime() {
-  const TIME_URL = "https://www.river.go.jp/kawabou/file/system/tmCrntTime.json";
-  const res = await axios.get(TIME_URL);
-  return res.data.obsValue?.obsTime || res.data.crntObsTime;
-}
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
 
-// --- 水位正規化 ---
-function normalizeStg(v) {
-  if (!v) return null;
-  if (v.stgCcd && v.stgCcd !== 0) return null;
-  if (v.stg === null || v.stg === undefined) return null;
-  if (v.stg === "" || v.stg === "-") return null;
-  return Number(v.stg);
-}
 
-// --- 10分 ---
-async function getCurrentWaterLevel10min(obsId) {
-  try {
-    const currentTime = await getCurrentTime();
-    const date = currentTime.slice(0, 10).replaceAll("/", "");
-    const time = currentTime.slice(11, 16).replace(":", "");
-    const url = `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${obsId}.json`;
+// ============================
+// 1時間データ保存
+// ============================
+async function saveHourData(obsId, hourData) {
 
-    const res = await axios.get(url);
-    const raw = res.data.min10Values || [];
+  if (!hourData?.labels?.length) return;
 
-    return {
-      labels: raw.map(v => v.obsTime).reverse(),
-      data: raw.map(v => normalizeStg(v)).reverse()
-    };
-  } catch (err) {
-    console.error("10min fetch error:", err.message);
-    return { labels: [], data: [] };
-  }
-}
+  const rows = hourData.labels.map((t, i) => ({
+    obs_id: obsId,
+    obs_time: t,
+    water_level: hourData.data[i]
+  }));
 
-// --- 1時間 ---
-async function getCurrentWaterLevelHour(obsId) {
-  try {
-    const currentTime = await getCurrentTime();
-    const date = currentTime.slice(0, 10).replaceAll("/", "");
-    const time = currentTime.slice(11, 16).replace(":", "");
-    const url = `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${obsId}.json`;
-
-    const res = await axios.get(url);
-    const raw = res.data.hrValues || [];
-
-    return {
-      labels: raw.map(v => v.obsTime).reverse(),
-      data: raw.map(v => normalizeStg(v)).reverse()
-    };
-  } catch (err) {
-    console.error("Hour fetch error:", err.message);
-    return { labels: [], data: [] };
-  }
-}
-
-// --- 過去7日 ---
-async function getWeekData(obsId) {
-  const today = new Date();
-  let allValues = [];
-
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-
-    const dateStr = `${yyyy}${mm}${dd}`;
-    const url = `https://www.river.go.jp/kawabou/file/files/tmlist/past/stg/${dateStr}/${obsId}.json`;
-
-    try {
-      const res = await axios.get(url);
-      allValues.push(...(res.data.pastValues || []));
-    } catch (err) {
-      console.warn("Week data fetch error:", err.message);
-    }
-  }
-
-  return sortAndFormat(allValues, false);
-}
-
-// --- 共通整形 ---
-function sortAndFormat(values, isSixMonth) {
-  const sorted = values.sort((a, b) => {
-    const aKey = (a.date || "").replaceAll("/", "") + (a.time || "").replace(":", "");
-    const bKey = (b.date || "").replaceAll("/", "") + (b.time || "").replace(":", "");
-    return aKey.localeCompare(bKey);
-  });
-
-  const labels = [];
-  const data = [];
-
-  for (const v of sorted) {
-    if (!v.date) continue;
-
-    if (isSixMonth) {
-      if (v.obs_time){
-        labels.push((v.obs_time || "").slice(0,10));
-      }
-    } else {
-      labels.push(v.obsTime || `${v.date} ${v.time}`);
-    }
-
-    data.push(normalizeStg(v));
-  }
-
-  return { labels, data };
-}
-
-// --- HTML生成 ---
-function buildQuadChartHtml(
-  title10min, labels10min, data10min,
-  titleHour, labelsHour, dataHour,
-  titleWeek, labelsWeek, dataWeek,
-  titleSixMonth, labelsSixMonth, dataSixMonth,
-  currentObsId
-) {
-  const optionsHtml = obsPoints.map(p =>
-    `<option value="${p.obs_id}" ${p.obs_id===currentObsId?"selected":""}>${p.name}</option>`
-  ).join("\n");
-
-  return `
-<html>
-<head>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body { font-family: sans-serif; text-align: center; }
-    h2 { font-size: 18px; margin: 20px 0 10px; }
-    .chart-container { width: 90%; max-width: 800px; height: 400px; margin: 20px auto; }
-    canvas { width: 100% !important; height: 100% !important; }
-    select { font-size: 16px; margin: 10px; }
-  </style>
-</head>
-<body>
-  <label>観測ポイントを選択:</label>
-  <select id="obsSelect">${optionsHtml}</select>
-
-  <h2>${title10min}</h2>
-  <div class="chart-container"><canvas id="chart10min"></canvas></div>
-
-  <h2>${titleHour}</h2>
-  <div class="chart-container"><canvas id="chartHour"></canvas></div>
-
-  <h2>${titleWeek}</h2>
-  <div class="chart-container"><canvas id="chartWeek"></canvas></div>
-
-  <h2>${titleSixMonth}</h2>
-  <div class="chart-container"><canvas id="chartSixMonth"></canvas></div>
-
-  <script>
-    let chart10min, chartHour, chartWeek, chartSixMonth;
-
-    function createChart(canvasId, labels, data){
-      return new Chart(document.getElementById(canvasId), {
-        type:'line',
-        data:{ labels, datasets:[{ data, borderWidth:2, tension:0.2 }] },
-        options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } }
-      });
-    }
-
-    function drawCharts(l10,d10,lHr,dHr,lW,dW,l6,d6){
-      if(chart10min) chart10min.destroy();
-      if(chartHour) chartHour.destroy();
-      if(chartWeek) chartWeek.destroy();
-      if(chartSixMonth) chartSixMonth.destroy();
-
-      const l6_cut = l6.map(l => (l||"").trim().slice(0,10));
-
-      chart10min = createChart('chart10min', l10, d10);
-      chartHour  = createChart('chartHour', lHr, dHr);
-      chartWeek  = createChart('chartWeek', lW, dW);
-
-      const ctx6 = document.getElementById('chartSixMonth').getContext('2d');
-      chartSixMonth = new Chart(ctx6, {
-        type: 'line',
-        data: { labels: l6_cut, datasets:[{ data:d6, borderWidth:2, tension:0.2, borderColor:'blue', backgroundColor:'rgba(0,0,255,0.1)', fill:true }] },
-        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } }
-      });
-    }
-
-    async function fetchAllData(obsId){
-      const res = await fetch('/waterlevel?obsId=' + obsId + '&json=1');
-      return await res.json();
-    }
-
-    const obsSelect = document.getElementById('obsSelect');
-
-    // 前回選択を復元
-    const savedObsId = localStorage.getItem('selectedObsId');
-    const initialObsId = savedObsId || obsSelect.value;
-    obsSelect.value = initialObsId;
-
-    // 初期描画
-    fetchAllData(initialObsId).then(json => {
-      drawCharts(
-        json.current10min.labels, json.current10min.data,
-        json.currentHour.labels,  json.currentHour.data,
-        json.week.labels,         json.week.data,
-        json.sixMonth.labels,     json.sixMonth.data
-      );
+  const { error } = await supabase
+    .from("water_levels")
+    .upsert(rows, {
+      onConflict: "obs_id,obs_time"
     });
 
-    // 選択変更時
-    obsSelect.addEventListener('change', async (e)=>{
-      const obsId = e.target.value;
-      localStorage.setItem('selectedObsId', obsId); // 保存
-      const json = await fetchAllData(obsId);
-      drawCharts(
-        json.current10min.labels, json.current10min.data,
-        json.currentHour.labels,  json.currentHour.data,
-        json.week.labels,         json.week.data,
-        json.sixMonth.labels,     json.sixMonth.data
-      );
-    });
-  </script>
-</body>
-</html>
-`;
+  if (error) {
+    console.error("Supabase save error:", error);
+  } else {
+    console.log("Supabase save success:", rows.length, "rows");
+  }
 }
 
+
+// ============================
+// 1ヶ月取得
+// ============================
+async function getMonthDataFromDB(obsId) {
+
+  const since = new Date();
+  since.setDate(since.getDate() - 30);
+
+  const { data, error } = await supabase
+    .from("water_levels")
+    .select("*")
+    .eq("obs_id", obsId)
+    .gte("obs_time", since.toISOString())
+    .order("obs_time", { ascending: true });
+
+  if (error) {
+    console.error("Supabase month fetch error:", error);
+    return { labels: [], data: [] };
+  }
+
+  return {
+    labels: data.map(v => v.obs_time),
+    data: data.map(v => v.water_level)
+  };
+}
+
+
+// ============================
+// 6ヶ月取得
+// ============================
+async function getSixMonthDataFromDB(obsId) {
+
+  const since = new Date();
+  since.setMonth(since.getMonth() - 6);
+
+  const { data, error } = await supabase
+    .from("water_levels")
+    .select("*")
+    .eq("obs_id", obsId)
+    .gte("obs_time", since.toISOString())
+    .order("obs_time", { ascending: true });
+
+  if (error) {
+    console.error("Supabase sixMonth fetch error:", error);
+    return { labels: [], data: [] };
+  }
+
+  return {
+    labels: data.map(v => v.obs_time),
+    data: data.map(v => v.water_level)
+  };
+}
+
+
+// ============================
+// export
+// ============================
 module.exports = {
-  getCurrentWaterLevel10min,
-  getCurrentWaterLevelHour,
-  getWeekData,
-  buildQuadChartHtml
+  saveHourData,
+  getMonthDataFromDB,
+  getSixMonthDataFromDB
 };
