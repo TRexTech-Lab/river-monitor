@@ -9,15 +9,12 @@ router.get("/health", (req, res) => {
 });
 
 router.get("/waterlevel", async (req, res) => {
-
   const obsId = req.query.obsId || "2155500400010";
 
   try {
-
     const h8 = await riverService.getWaterLevel8h(obsId);
     const d3 = await riverService.getWaterLevel3d(obsId);
-    const d7 = await riverService.getWaterLevel7d(obsId);
-
+    const d7 = await riverService.getWeekData(obsId);
     const m1 = await getMonthDataFromDB(obsId);
     const m6 = await getSixMonthDataFromDB(obsId);
 
