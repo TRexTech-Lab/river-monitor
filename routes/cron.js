@@ -24,8 +24,9 @@ router.get("/save", async (req, res) => {
       try {
         // --- weekData を取得 ---
         const weekData = await getWeekData(p.obs_id);
-        // console.log("weekData sample:", weekData);
-
+        //console.log("weekData sample:", weekData);
+        console.log("DEBUG", p.obs_id, weekData.labels?.length);
+        
         const labels = weekData.labels || [];
         const data = weekData.data || [];
 
