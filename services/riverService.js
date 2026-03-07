@@ -170,7 +170,7 @@ function createTimeChart(canvasId, labels, data) {
               const label = ctx.tick.label;
               if (!label) return 1;
               const day = label.slice(0, 10);
-              return drawnDays.has(day) ? 2.5 : 1; // 線の太さを調整したければここで変更可能
+              return drawnDays.has(day) ? 1 : 1; // 線の太さを調整したければここで変更可能
             }
           }
         }
@@ -200,7 +200,7 @@ function createMonthlyChart(canvasId, labels, data){
               const day = Number(label.slice(8,10));
               if(day===1 && !drawnDays.has(monthKey)){
                 drawnDays.add(monthKey);
-                return 'rgba(100,100,200,0.8)';
+                return 'rgba(100,100,200,1.0)';
               }
               return 'rgba(100,100,200,0.2)';
             },
@@ -213,7 +213,7 @@ function createMonthlyChart(canvasId, labels, data){
           
               if(day === 1 && !drawnDays.has(monthKey)){
                 drawnDays.add(monthKey);
-                return 2.5;
+                return 1;
               }
               return 1;
               }
