@@ -171,8 +171,11 @@ function createTimeChart(canvasId, labels, data) {
             lineWidth: function(ctx) {
               const label = ctx.tick.label;
               if (!label) return 1;
-              const day = label.slice(0, 10);
-              return drawnDays.has(day) ? 1 : 1; // 線の太さを調整したければここで変更可能
+              const time = label.slice(11,16);
+              if (time === "00:00"){
+                return 2; // 線の太さを調整したければここで変更可能
+              }
+              return 1;
             }
           }
         }
