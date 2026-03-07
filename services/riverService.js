@@ -195,9 +195,11 @@ function createMonthlyChart(canvasId, labels, data){
             color:function(ctx){
               const label = ctx.tick.label;
               if(!label) return 'rgba(200,200,200,0.2)';
+
+              const monthKey = label.slice(0,7);
               const day = Number(label.slice(8,10));
-              if(day===1 && !drawnDays.has(label)){
-                drawnDays.add(label);
+              if(day===1 && !drawnDays.has(monthKey)){
+                drawnDays.add(monthKey);
                 return 'rgba(200,200,200,0.8)';
               }
               return 'rgba(200,200,200,0.2)';
@@ -205,9 +207,16 @@ function createMonthlyChart(canvasId, labels, data){
             lineWidth:function(ctx){
               const label = ctx.tick.label;
               if(!label) return 1;
+          
+              const monthKey = label.slice(0,7);
               const day = Number(label.slice(8,10));
-              return (day===1 && drawnDays.has(label)) ? 2.5 : 1;
-            }
+          
+              if(day === 1 && !drawnDays.has(monthKey)){
+                drawnDays.add(monthKey);
+                return 2.5;
+              }
+              return 1;
+              }
           }
         }
       }
