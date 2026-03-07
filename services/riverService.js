@@ -181,7 +181,7 @@ function createTimeChart(canvasId, labels, data) {
 
 
 function createMonthlyChart(canvasId, labels, data){
-  const drawnDays = new Set();
+  const drawnMonth = new Set();
   return new Chart(document.getElementById(canvasId),{
     type:'line',
     data:{labels,datasets:[{data,borderWidth:2,tension:0.2}]},
@@ -211,8 +211,8 @@ function createMonthlyChart(canvasId, labels, data){
               const monthKey = label.slice(0,7);
               const day = Number(label.slice(8,10));
           
-              if(day === 1 && !drawnDays.has(monthKey)){
-                drawnDays.add(monthKey);
+              if(day === 1 && !drawnMonth.has(monthKey)){
+                drawnMonth.add(monthKey);
                 return 1;
               }
               return 1;
