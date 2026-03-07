@@ -183,7 +183,6 @@ function createTimeChart(canvasId, labels, data) {
 
 
 function createMonthlyChart(canvasId, labels, data){
-  const drawnMonth = new Set();
   return new Chart(document.getElementById(canvasId),{
     type:'line',
     data:{labels,datasets:[{data,borderWidth:2,tension:0.2}]},
@@ -195,31 +194,38 @@ function createMonthlyChart(canvasId, labels, data){
         x:{
           grid:{
             color:function(ctx){
-              const label = ctx.tick.label;
-              if(!label) return 'rgba(100,100,200,0.2)';
+              const i = ctx.index;
 
-              const prev = labels[i-1].slice(0,7); // YYYY-MM
-              const curr = labels[i].slice(0,7);
-              
-              if(prev !=== curr){
+              if(i === 0){
                 return 'rgba(100,100,200,1.0)';
               }
+
+              const prev = labels[i-1].slice(0,7);
+              const curr = labels[i].slice(0,7);
+
+              if(prev !== curr){
+                return 'rgba(100,100,200,1.0)';
+              }
+
               return 'rgba(100,100,200,0.2)';
             },
-            
+
             lineWidth:function(ctx){
-              const label = ctx.tick.label;
-              if(!label) return 1;
-          
-              const prev = labels[i-1].slice(0,7); // YYYY-MM
+              const i = ctx.index;
+
+              if(i === 0){
+                return 2;
+              }
+
+              const prev = labels[i-1].slice(0,7);
               const curr = labels[i].slice(0,7);
-          
-              if(prev !=== curr){
-                return 1;
+
+              if(prev !== curr){
+                return 2;
               }
+
               return 1;
-              }
-              
+            }
           }
         }
       }
