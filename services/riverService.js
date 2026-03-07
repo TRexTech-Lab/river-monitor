@@ -156,11 +156,13 @@ function createTimeChart(canvasId, labels, data) {
         x: {
           grid: {
             color: function(ctx) {
-              const label = ctx.tick.label;
+              const i = ctx.index;
+              const label = labels[i];
+              
               if (!label) return 'rgba(100,100,200,0.2)';
               
               const day = label.slice(0, 10); // YYYY-MM-DD部分
-              const time = label.slice(11,16);
+              const time = label.split(" ")[1];
               
               if (time === "00:00") {
                 return 'rgba(100,100,200,1.0)';
@@ -169,9 +171,14 @@ function createTimeChart(canvasId, labels, data) {
             },
             
             lineWidth: function(ctx) {
-              const label = ctx.tick.label;
+              const i = ctx.index;
+              const labels = ct.tick.label;
+              const label = labels[i];
+
               if (!label) return 1;
-              const time = label.slice(11,16);
+              
+              const time = label.split(" ")[1];
+              
               if (time === "00:00"){
                 return 2; // 線の太さを調整したければここで変更可能
               }
@@ -198,15 +205,17 @@ function createMonthlyChart(canvasId, labels, data){
           grid:{
             color:function(ctx){
               const i = ctx.index;
+              const label = ctx.tick.label;
+
+              const prev = ctx.chart.scales.x.ticks[i-1]?.label;
+              const prevMonth = prev.slice(0,7);
+              const currMonth = label.slice(0,7);
 
               if(i === 0){
                 return 'rgba(100,100,200,1.0)';
               }
 
-              const prev = labels[i-1].slice(0,7);
-              const curr = labels[i].slice(0,7);
-
-              if(prev !== curr){
+              if(prevMonth !== currMonth){
                 return 'rgba(100,100,200,1.0)';
               }
 
@@ -215,15 +224,17 @@ function createMonthlyChart(canvasId, labels, data){
 
             lineWidth:function(ctx){
               const i = ctx.index;
+              const label = ctx.tick.label;
 
               if(i === 0){
                 return 2;
               }
 
-              const prev = labels[i-1].slice(0,7);
-              const curr = labels[i].slice(0,7);
+              const prev = ctx.chart.scales.x.ticks[i-1]?.label;
+              const prevMonth = prev.slice(0,7);
+              const currMonth = label.slice(0,7);
 
-              if(prev !== curr){
+              if(prevMonth !== currMonth){
                 return 2;
               }
 
