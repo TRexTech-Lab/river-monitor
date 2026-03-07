@@ -161,15 +161,16 @@ function createTimeChart(canvasId, labels, data) {
               const day = label.slice(0, 10); // YYYY-MM-DD部分
               if (!drawnDays.has(day)) {
                 drawnDays.add(day);
-                return 'rgba(255,255,255,2.0)';
+                return 'rgba(200,200,200,1.0)';
               }
               return 'rgba(255,255,255,0.2)';
+            },
             
             lineWidth: function(ctx) {
               const label = ctx.tick.label;
               if (!label) return 1;
               const day = label.slice(0, 10);
-              return drawnDays.has(day) ? 1 : 1; // 線の太さを調整したければここで変更可能
+              return drawnDays.has(day) ? 2.5 : 1; // 線の太さを調整したければここで変更可能
             }
           }
         }
@@ -205,7 +206,7 @@ function createMonthlyChart(canvasId, labels, data){
               const label = ctx.tick.label;
               if(!label) return 1;
               const day = Number(label.slice(8,10));
-              return (day===1 && drawnDays.has(label)) ? 2 : 1;
+              return (day===1 && drawnDays.has(label)) ? 2.5 : 1;
             }
           }
         }
