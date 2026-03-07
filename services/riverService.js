@@ -158,8 +158,11 @@ function createTimeChart(canvasId, labels, data) {
             color: function(ctx) {
               const label = ctx.tick.label;
               if (!label) return 'rgba(100,100,200,0.2)';
+              
               const day = label.slice(0, 10); // YYYY-MM-DD部分
-              if (!drawnDays.has(day)) {
+              const time = label.slice(11,16);
+              
+              if (time === "00:00" && !drawnDays.has(day)) {
                 drawnDays.add(day);
                 return 'rgba(100,100,200,1.0)';
               }
