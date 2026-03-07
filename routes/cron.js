@@ -38,7 +38,7 @@ router.get("/save", async (req, res) => {
         const rows = labels.map((time, i) => ({
           obs_id: p.obs_id,
           obs_time: time,
-          stg: data[i],
+          water_level: data[i],
         }));
 
         // --- Supabase に丸ごと upsert ---
