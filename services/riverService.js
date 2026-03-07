@@ -112,6 +112,41 @@ function sortAndFormat(values, isSixMonth) {
   return { labels, data };
 }
 
+// --- 月初を一意に描画する Monthly チャート ---
+function createMonthlyChart(canvasId, labels, data, drawnDays) {
+  return new Chart(document.getElementById(canvasId), {
+    type: 'line',
+    data: { labels, datasets: [{ data, borderWidth: 2, tension: 0.2 }] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          grid: {
+            color: function(ctx) {
+              const label = ctx.tick.label;
+              if (!label) return 'rgba(200,200,200,0.2)';
+              const day = Number(label.slice(8, 10));
+              if (day === 1 && !drawnDays.has(label)) {
+                drawnDays.add(label);
+                return 'rgba(200,200,200,0.8)';
+              }
+              return 'rgba(200,200,200,0.2)';
+            },
+            lineWidth: function(ctx) {
+              const label = ctx.tick.label;
+              if (!label) return 1;
+              const day = Number(label.slice(8, 10));
+              return (day === 1 && drawnDays.has(label)) ? 2 : 1;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
 // --- HTML生成 ---
 function buildFiveChartHtml(
   title8h, labels8h, data8h,
@@ -181,59 +216,12 @@ function buildFiveChartHtml(
       chart3d = createChart('chart3d', l3, d3);
       chart7d = createChart('chart7d', l7, d7);
 
-      // --- 月の境界線を目立たせた 1か月グラフ ---
-      chart1M = new Chart(document.getElementById('chart1M'), {
-        type:'line',
-        data:{ labels: l1_cut, datasets:[{ data: d1, borderWidth:2, tension:0.2 }] },
-        options:{
-          responsive:true,
-          maintainAspectRatio:false,
-          plugins:{ legend:{ display:false } },
-          scales:{
-            x:{
-              grid:{
-                color: function(ctx){
-                  const label = ctx.tick.label;
-                  const day = Number(label.slice(8,10));
-                  return day === 1 ? 'rgba(255,0,0,0.8)' : 'rgba(200,200,200,0.2)';
-                },
-                lineWidth: function(ctx){
-                  const label = ctx.tick.label;
-                  const day = Number(label.slice(8,10));
-                  return day === 1 ? 2 : 1;
-                }
-              }
-            }
-          }
-        }
-      });
+      // 月初縦線セットを毎回初期化
+      const drawnDays1M = new Set();
+      const drawnDays6M = new Set();
 
-      // --- 月の境界線を目立たせた 6か月グラフ ---
-      chart6M = new Chart(document.getElementById('chart6M'), {
-        type:'line',
-        data:{ labels: l6_cut, datasets:[{ data: d6, borderWidth:2, tension:0.2 }] },
-        options:{
-          responsive:true,
-          maintainAspectRatio:false,
-          plugins:{ legend:{ display:false } },
-          scales:{
-            x:{
-              grid:{
-                color: function(ctx){
-                  const label = ctx.tick.label;
-                  const day = Number(label.slice(8,10));
-                  return day === 1 ? 'rgba(255,0,0,0.8)' : 'rgba(200,200,200,0.2)';
-                },
-                lineWidth: function(ctx){
-                  const label = ctx.tick.label;
-                  const day = Number(label.slice(8,10));
-                  return day === 1 ? 2 : 1;
-                }
-              }
-            }
-          }
-        }
-      });
+      chart1M = createMonthlyChart('chart1M', l1_cut, d1, drawnDays1M);
+      chart6M = createMonthlyChart('chart6M', l6_cut, d6, drawnDays6M);
     }
 
     async function fetchAllData(obsId){
@@ -242,7 +230,6 @@ function buildFiveChartHtml(
     }
 
     const obsSelect = document.getElementById('obsSelect');
-
     const savedObsId = localStorage.getItem('selectedObsId');
     const initialObsId = savedObsId || obsSelect.value;
     obsSelect.value = initialObsId;
@@ -275,7 +262,6 @@ function buildFiveChartHtml(
 `;
 }
 
-// --- モジュールエクスポート ---
 module.exports = {
   getWaterLevel8h,
   getWaterLevel3d,
