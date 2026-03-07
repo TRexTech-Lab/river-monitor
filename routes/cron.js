@@ -36,16 +36,34 @@ router.get("/save", async (req, res) => {
         }
 
         // --- labels と data を結合して Supabase に入れる形に整形 ---
-        const rows = labels.map((time, i) => ({
-          obs_id: p.obs_id,
-          obs_time: time,
-          water_level: data[i],
-        }));
+        const rows = [];
+        const seen = new Set();
+        
+        labels.forEach((time, i) => {
+          const key = `${p.obs_id}_${time}`;
+          if (!seen.has(key)) {
+            rows.push({
+              obs_id: p.obs_id,
+              obs_time: time,
+              water_level: data[i],
+            });
+            seen.add(key);
+          }
+        });
 
+        // rows を再度ユニーク化
+        const uniqueRows = Array.from(
+          rows.reduce((map, row) => {
+            const key = `${row.obs_id}_${row.obs_time}`;
+            if (!map.has(key)) map.set(key, row);
+            return map;
+          }, new Map()).values()
+        );
+        
         // --- Supabase に丸ごと upsert ---
         const { error } = await supabase
           .from("water_levels")
-          .upsert(rows, { onConflict: ["obs_id", "obs_time"] });
+          .upsert(uniqueRows, { onConflict: ["obs_id", "obs_time"] });
         
         if (error) {
           console.error("Supabase error:", p.obs_id, error);
