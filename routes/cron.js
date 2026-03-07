@@ -43,11 +43,15 @@ router.get("/save", async (req, res) => {
         }));
 
         // --- Supabase に丸ごと upsert ---
-        await supabase
+        const { data, error } = await supabase
           .from("water_levels")
           .upsert(rows, { onConflict: ["obs_id", "obs_time"] });
-
-        console.log(`Saved: ${p.obs_id} (${rows.length} rows)`);
+        
+        if (error) {
+          console.error("Supabase error:", p.obs_id, error);
+        } else {
+          console.log(`Saved: ${p.obs_id} (${rows.length} rows)`);
+        }
 
       } catch (err) {
         console.error("Error saving:", p.obs_id, err.message);
