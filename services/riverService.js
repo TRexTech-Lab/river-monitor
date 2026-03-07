@@ -172,11 +172,9 @@ function createTimeChart(canvasId, labels, data) {
             
             lineWidth: function(ctx) {
               const i = ctx.index;
-              const labels = ct.tick.label;
               const label = labels[i];
-
-              if (!label) return 1;
               
+              if (!label) return 1;
               const time = label.split(" ")[1];
               
               if (time === "00:00"){
