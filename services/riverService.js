@@ -126,8 +126,153 @@ function buildFiveChartHtml(
   ).join("\n");
 
   return `
-  …（HTML/Chart.js部分は省略）…
-  `;
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; text-align: center; }
+    h2 { font-size: 18px; margin: 20px 0 10px; }
+    .chart-container { width: 90%; max-width: 800px; height: 400px; margin: 20px auto; }
+    canvas { width: 100% !important; height: 100% !important; }
+    select { font-size: 16px; margin: 10px; }
+  </style>
+</head>
+<body>
+  <label>観測ポイントを選択:</label>
+  <select id="obsSelect">${optionsHtml}</select>
+
+  <h2>${title8h}</h2>
+  <div class="chart-container"><canvas id="chart8h"></canvas></div>
+
+  <h2>${title3d}</h2>
+  <div class="chart-container"><canvas id="chart3d"></canvas></div>
+
+  <h2>${title7d}</h2>
+  <div class="chart-container"><canvas id="chart7d"></canvas></div>
+
+  <h2>${title1M}</h2>
+  <div class="chart-container"><canvas id="chart1M"></canvas></div>
+
+  <h2>${title6M}</h2>
+  <div class="chart-container"><canvas id="chart6M"></canvas></div>
+
+  <script>
+    let chart8h, chart3d, chart7d, chart1M, chart6M;
+
+    function createChart(canvasId, labels, data){
+      return new Chart(document.getElementById(canvasId), {
+        type:'line',
+        data:{ labels, datasets:[{ data, borderWidth:2, tension:0.2 }] },
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } }
+      });
+    }
+
+    function drawCharts(l8,d8,l3,d3,l7,d7,l1,d1,l6,d6){
+      if(chart8h) chart8h.destroy();
+      if(chart3d) chart3d.destroy();
+      if(chart7d) chart7d.destroy();
+      if(chart1M) chart1M.destroy();
+      if(chart6M) chart6M.destroy();
+
+      const l1_cut = l1.map(l => l.slice(0,10));
+      const l6_cut = l6.map(l => l.slice(0,10));
+
+      chart8h = createChart('chart8h', l8, d8);
+      chart3d = createChart('chart3d', l3, d3);
+      chart7d = createChart('chart7d', l7, d7);
+
+      // --- 月の境界線を目立たせた 1か月グラフ ---
+      chart1M = new Chart(document.getElementById('chart1M'), {
+        type:'line',
+        data:{ labels: l1_cut, datasets:[{ data: d1, borderWidth:2, tension:0.2 }] },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          plugins:{ legend:{ display:false } },
+          scales:{
+            x:{
+              grid:{
+                color: function(ctx){
+                  const label = ctx.tick.label;
+                  const day = Number(label.slice(8,10));
+                  return day === 1 ? 'rgba(255,0,0,0.8)' : 'rgba(200,200,200,0.2)';
+                },
+                lineWidth: function(ctx){
+                  const label = ctx.tick.label;
+                  const day = Number(label.slice(8,10));
+                  return day === 1 ? 2 : 1;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // --- 月の境界線を目立たせた 6か月グラフ ---
+      chart6M = new Chart(document.getElementById('chart6M'), {
+        type:'line',
+        data:{ labels: l6_cut, datasets:[{ data: d6, borderWidth:2, tension:0.2 }] },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          plugins:{ legend:{ display:false } },
+          scales:{
+            x:{
+              grid:{
+                color: function(ctx){
+                  const label = ctx.tick.label;
+                  const day = Number(label.slice(8,10));
+                  return day === 1 ? 'rgba(255,0,0,0.8)' : 'rgba(200,200,200,0.2)';
+                },
+                lineWidth: function(ctx){
+                  const label = ctx.tick.label;
+                  const day = Number(label.slice(8,10));
+                  return day === 1 ? 2 : 1;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    async function fetchAllData(obsId){
+      const res = await fetch('/waterlevel?obsId=' + obsId + '&json=1');
+      return await res.json();
+    }
+
+    const obsSelect = document.getElementById('obsSelect');
+
+    const savedObsId = localStorage.getItem('selectedObsId');
+    const initialObsId = savedObsId || obsSelect.value;
+    obsSelect.value = initialObsId;
+
+    fetchAllData(initialObsId).then(json => {
+      drawCharts(
+        json.h8.labels, json.h8.data,
+        json.d3.labels, json.d3.data,
+        json.d7.labels, json.d7.data,
+        json.m1.labels, json.m1.data,
+        json.m6.labels, json.m6.data
+      );
+    });
+
+    obsSelect.addEventListener('change', async (e)=>{
+      const obsId = e.target.value;
+      localStorage.setItem('selectedObsId', obsId);
+      const json = await fetchAllData(obsId);
+      drawCharts(
+        json.h8.labels, json.h8.data,
+        json.d3.labels, json.d3.data,
+        json.d7.labels, json.d7.data,
+        json.m1.labels, json.m1.data,
+        json.m6.labels, json.m6.data
+      );
+    });
+  </script>
+</body>
+</html>
+`;
 }
 
 // --- モジュールエクスポート ---
