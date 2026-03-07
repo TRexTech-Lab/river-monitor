@@ -143,6 +143,42 @@ function createChart(canvasId, labels, data){
   });
 }
 
+function createTimeChart(canvasId, labels, data) {
+  const drawnDays = new Set();
+  return new Chart(document.getElementById(canvasId), {
+    type: 'line',
+    data: { labels, datasets: [{ data, borderWidth: 2, tension: 0.2 }] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          grid: {
+            color: function(ctx) {
+              const label = ctx.tick.label;
+              if (!label) return 'rgba(200,200,200,0.2)';
+              const day = label.slice(0, 10); // YYYY-MM-DD部分
+              if (!drawnDays.has(day)) {
+                drawnDays.add(day);
+                return 'rgba(200,200,200,0.8)';
+              }
+              return 'rgba(200,200,200,0.2)';
+            },
+            lineWidth: function(ctx) {
+              const label = ctx.tick.label;
+              if (!label) return 1;
+              const day = label.slice(0, 10);
+              return drawnDays.has(day) ? 1 : 1; // 線の太さを調整したければここで変更可能
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+
 function createMonthlyChart(canvasId, labels, data){
   const drawnDays = new Set();
   return new Chart(document.getElementById(canvasId),{
@@ -161,7 +197,7 @@ function createMonthlyChart(canvasId, labels, data){
               const day = Number(label.slice(8,10));
               if(day===1 && !drawnDays.has(label)){
                 drawnDays.add(label);
-                return 'rgba(255,0,0,0.8)';
+                return 'rgba(200,200,200,0.8)';
               }
               return 'rgba(200,200,200,0.2)';
             },
@@ -188,8 +224,8 @@ function drawCharts(l8,d8,l3,d3,l7,d7,l1,d1,l6,d6){
   const l1_cut = l1.map(l=>l.slice(0,10));
   const l6_cut = l6.map(l=>l.slice(0,10));
 
-  chart8h = createChart('chart8h',l8,d8);
-  chart3d = createChart('chart3d',l3,d3);
+  chart8h = createTimeChart('chart8h',l8,d8);
+  chart3d = createTimeChart('chart3d',l3,d3);
   chart7d = createChart('chart7d',l7,d7);
   chart1M = createMonthlyChart('chart1M',l1_cut,d1);
   chart6M = createMonthlyChart('chart6M',l6_cut,d6);
