@@ -43,7 +43,7 @@ router.get("/save", async (req, res) => {
         }));
 
         // --- Supabase に丸ごと upsert ---
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("water_levels")
           .upsert(rows, { onConflict: ["obs_id", "obs_time"] });
         
