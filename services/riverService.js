@@ -162,8 +162,7 @@ function createTimeChart(canvasId, labels, data) {
               const day = label.slice(0, 10); // YYYY-MM-DD部分
               const time = label.slice(11,16);
               
-              if (time === "00:00" && !drawnDays.has(day)) {
-                drawnDays.add(day);
+              if (time === "00:00") {
                 return 'rgba(100,100,200,1.0)';
               }
               return 'rgba(100,100,200,0.2)';
@@ -199,27 +198,28 @@ function createMonthlyChart(canvasId, labels, data){
               const label = ctx.tick.label;
               if(!label) return 'rgba(100,100,200,0.2)';
 
-              const monthKey = label.slice(0,7);
-              const day = Number(label.slice(8,10));
-              if(day===1 && !drawnMonth.has(monthKey)){
-                drawnMonth.add(monthKey);
+              const prev = labels[i-1].slice(0,7); // YYYY-MM
+              const curr = labels[i].slice(0,7);
+              
+              if(prev !=== curr){
                 return 'rgba(100,100,200,1.0)';
               }
               return 'rgba(100,100,200,0.2)';
             },
+            
             lineWidth:function(ctx){
               const label = ctx.tick.label;
               if(!label) return 1;
           
-              const monthKey = label.slice(0,7);
-              const day = Number(label.slice(8,10));
+              const prev = labels[i-1].slice(0,7); // YYYY-MM
+              const curr = labels[i].slice(0,7);
           
-              if(day === 1 && !drawnMonth.has(monthKey)){
-                drawnMonth.add(monthKey);
+              if(prev !=== curr){
                 return 1;
               }
               return 1;
               }
+              
           }
         }
       }
