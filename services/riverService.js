@@ -161,10 +161,10 @@ function createTimeChart(canvasId, labels, data) {
               const day = label.slice(0, 10); // YYYY-MM-DD部分
               if (!drawnDays.has(day)) {
                 drawnDays.add(day);
-                return 'rgba(200,200,200,1.0)';
+                return 'rgba(255,255,255,2.0)';
               }
-              return 'rgba(200,200,200,0.2)';
-            },
+              return 'rgba(255,255,255,0.2)';
+            
             lineWidth: function(ctx) {
               const label = ctx.tick.label;
               if (!label) return 1;
