@@ -180,8 +180,61 @@ function buildFiveChartHtml(
       chart8h = createChart('chart8h', l8, d8);
       chart3d = createChart('chart3d', l3, d3);
       chart7d = createChart('chart7d', l7, d7);
-      chart1M = createChart('chart1M', l1_cut, d1);
-      chart6M = createChart('chart6M', l6_cut, d6);
+      //chart1M = createChart('chart1M', l1_cut, d1);
+      //chart6M = createChart('chart6M', l6_cut, d6);
+      
+      chart1M = new Chart(document.getElementById('chart1M'), {
+        type:'line',
+        data:{ labels: l1_cut, datasets:[{ data: d1, borderWidth:2, tension:0.2 }] },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          plugins:{ legend:{ display:false } },
+          scales:{
+            x:{
+              grid:{
+                color: function(ctx){
+                  const label = ctx.tick.label;      // YYYY-MM-DD
+                  const day = Number(label.slice(8,10));
+                  return day === 1 ? 'rgba(255,0,0,0.8)' : 'rgba(200,200,200,0.2)';
+                },
+                lineWidth: function(ctx){
+                  const label = ctx.tick.label;
+                  const day = Number(label.slice(8,10));
+                  return day === 1 ? 2 : 1;
+                }
+              }
+            }
+          }
+        }
+      });
+    
+      // --- 月の境界線を目立たせた 6か月グラフ ---
+      chart6M = new Chart(document.getElementById('chart6M'), {
+        type:'line',
+        data:{ labels: l6_cut, datasets:[{ data: d6, borderWidth:2, tension:0.2 }] },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          plugins:{ legend:{ display:false } },
+          scales:{
+            x:{
+              grid:{
+                color: function(ctx){
+                  const label = ctx.tick.label;      // YYYY-MM-DD
+                  const day = Number(label.slice(8,10));
+                  return day === 1 ? 'rgba(255,0,0,0.8)' : 'rgba(200,200,200,0.2)';
+                },
+                lineWidth: function(ctx){
+                  const label = ctx.tick.label;
+                  const day = Number(label.slice(8,10));
+                  return day === 1 ? 2 : 1;
+                }
+              }
+            }
+          }
+        }
+      });
     }
 
     async function fetchAllData(obsId){
