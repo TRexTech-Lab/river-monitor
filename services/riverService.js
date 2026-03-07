@@ -198,8 +198,8 @@ function createMonthlyChart(canvasId, labels, data){
 
               const monthKey = label.slice(0,7);
               const day = Number(label.slice(8,10));
-              if(day===1 && !drawnDays.has(monthKey)){
-                drawnDays.add(monthKey);
+              if(day===1 && !drawnMonth.has(monthKey)){
+                drawnMonth.add(monthKey);
                 return 'rgba(100,100,200,1.0)';
               }
               return 'rgba(100,100,200,0.2)';
