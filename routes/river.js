@@ -26,7 +26,7 @@ router.get("/waterlevel", async (req, res) => {
       riverService.buildFiveChartHtml(
         "8h Water Level (m)", h8.labels, h8.data,
         "2d Water Level (m)", d3.labels, d3.data,
-        "7d Water Level (m)", d7.labels, d7.data,
+        "2w Water Level (m)", d7.labels, d7.data,
         "1M Water Level (m)", m1.labels, m1.data,
         "6M Water Level (m)", m6.labels, m6.data,
         obsId
