@@ -218,6 +218,8 @@ const highlightWeekPlugin = {
     const labels = data.labels;
     if (!labels || labels.length === 0) return;
 
+    const drawnSundays = new Set(); // 描画済みの日曜
+
     ctx.save();
     ctx.strokeStyle = 'rgba(100,100,100,1)';
     ctx.lineWidth = 1.5;
@@ -225,7 +227,10 @@ const highlightWeekPlugin = {
     for (let i = 0; i < labels.length; i++) {
       const dateStr = labels[i].split(" ")[0]; // YYYY-MM-DD
       const d = new Date(dateStr);
-      if (d.getDay() === 0) { // 日曜日
+
+      if (d.getDay() === 0 && !drawnSundays.has(dateStr)) { // 日曜かつまだ描画していない
+        drawnSundays.add(dateStr);
+
         const x = chart.getDatasetMeta(0).data[i].x;
         ctx.beginPath();
         ctx.moveTo(x, chartArea.top);
