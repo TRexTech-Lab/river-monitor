@@ -210,6 +210,34 @@ const highlightGridPlugin = {
   }
 };
 
+// --- Monthly専用プラグイン（月境目だけ強調） ---
+const highlightMonthPlugin = {
+  id: 'highlightMonth',
+  afterDraw(chart) {
+    const { ctx, chartArea, data } = chart;
+    const labels = data.labels;
+    if (!labels || labels.length === 0) return;
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(100,100,100,1)';
+    ctx.lineWidth = 1.5;
+
+    for (let i = 1; i < labels.length; i++) {
+      const prevMonth = labels[i-1].slice(0,7); // YYYY-MM
+      const currMonth = labels[i].slice(0,7);
+      if (prevMonth !== currMonth) {
+        const x = chart.getDatasetMeta(0).data[i].x;
+        ctx.beginPath();
+        ctx.moveTo(x, chartArea.top);
+        ctx.lineTo(x, chartArea.bottom);
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore();
+  }
+};
+
 // --- 時間系グラフ作成関数 ---
 function createTimeChart(canvasId, labels, data) {
   return new Chart(document.getElementById(canvasId), {
@@ -228,7 +256,7 @@ function createTimeChart(canvasId, labels, data) {
 function createChart(canvasId, labels, data, plugins = []) {
   return new Chart(document.getElementById(canvasId), {
     type: 'line',
-    data: { labels, datasets: [{ data, borderWidth: 2, tension: 0.2 }] },
+    data: { labels, datasets: [{ data, borderWidth: 1, tension: 0.2 }] },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -257,8 +285,8 @@ async function fetchAndDraw(obsId) {
   // Monthlyは日付だけにして plugin 適用
   const m1Labels = json.m1.labels.map(l => l.slice(0,10));
   const m6Labels = json.m6.labels.map(l => l.slice(0,10));
-  chart1M = createChart('chart1M', m1Labels, json.m1.data);
-  chart6M = createChart('chart6M', m6Labels, json.m6.data);
+  chart1M = createChart('chart1M', m1Labels, json.m1.data, [highlightMonthPlugin]);
+  chart6M = createChart('chart6M', m6Labels, json.m6.data, [highlightMonthPlugin]);
 }
 
 const obsSelect = document.getElementById('obsSelect');
