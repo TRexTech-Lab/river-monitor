@@ -104,6 +104,7 @@ async function getWeekData(obsId) {
   return sortAndFormat(allValues, false);
 }
 
+// --- 全部まとめて取得 ---
 async function getAllWaterData(obsId) {
   const h8 = await getWaterLevel8h(obsId);
   const d3 = await getWaterLevel3d(obsId);
@@ -137,6 +138,65 @@ function sortAndFormat(values, isSixMonth) {
   return { labels, data };
 }
 
+// --- Grid強調プラグイン（月別グラフ用） ---
+const monthBoundaryPlugin = {
+  id: 'monthBoundary',
+  afterDraw(chart) {
+    const { ctx, chartArea } = chart;
+    const labels = chart.data.labels;
+    if (!labels || labels.length === 0) return;
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(100,100,100,1)';
+    ctx.lineWidth = 1.5;
+
+    for (let i = 1; i < labels.length; i++) {
+      const prev = labels[i - 1];
+      const curr = labels[i];
+      if (!prev || !curr) continue;
+
+      const prevMonth = prev.slice(0, 7);
+      const currMonth = curr.slice(0, 7);
+
+      if (prevMonth !== currMonth) {
+        const x = chart.getDatasetMeta(0).data[i].x;
+        ctx.beginPath();
+        ctx.moveTo(x, chartArea.top);
+        ctx.lineTo(x, chartArea.bottom);
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore();
+  }
+};
+
+// --- Chart作成関数 ---
+function createChart(canvasId, labels, data, plugin = []) {
+  return new Chart(document.getElementById(canvasId), {
+    type: 'line',
+    data: { labels, datasets: [{ data, borderWidth: 2, tension: 0.2 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } },
+    plugins: plugin
+  });
+}
+
+function drawCharts(l8, d8, l3, d3, l7, d7, l1, d1, l6, d6) {
+  if (chart8h) chart8h.destroy();
+  if (chart3d) chart3d.destroy();
+  if (chart7d) chart7d.destroy();
+  if (chart1M) chart1M.destroy();
+  if (chart6M) chart6M.destroy();
+
+  chart8h = createChart('chart8h', l8, d8);
+  chart3d = createChart('chart3d', l3, d3);
+  chart7d = createChart('chart7d', l7, d7);
+
+  // Monthlyグラフだけplugin適用
+  chart1M = createChart('chart1M', l1, d1, [monthBoundaryPlugin]);
+  chart6M = createChart('chart6M', l6, d6, [monthBoundaryPlugin]);
+}
+
 // --- HTML生成 ---
 function buildFiveChartHtml(
   title8h, labels8h, data8h,
@@ -147,9 +207,7 @@ function buildFiveChartHtml(
   currentObsId
 ) {
   const optionsHtml = obsPoints
-    .map(p =>
-      `<option value="${p.obs_id}" ${p.obs_id === currentObsId ? "selected" : ""}>${p.name}</option>`
-    )
+    .map(p => `<option value="${p.obs_id}" ${p.obs_id === currentObsId ? "selected" : ""}>${p.name}</option>`)
     .join("\n");
 
   return `
@@ -178,28 +236,6 @@ select { font-size: 16px; margin: 10px; }
 <script>
 let chart8h, chart3d, chart7d, chart1M, chart6M;
 
-function createChart(canvasId, labels, data) {
-  return new Chart(document.getElementById(canvasId), {
-    type: 'line',
-    data: { labels, datasets: [{ data, borderWidth: 2, tension: 0.2 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-  });
-}
-
-function drawCharts(l8, d8, l3, d3, l7, d7, l1, d1, l6, d6) {
-  if (chart8h) chart8h.destroy();
-  if (chart3d) chart3d.destroy();
-  if (chart7d) chart7d.destroy();
-  if (chart1M) chart1M.destroy();
-  if (chart6M) chart6M.destroy();
-
-  chart8h = createChart('chart8h', l8, d8);
-  chart3d = createChart('chart3d', l3, d3);
-  chart7d = createChart('chart7d', l7, d7);
-  chart1M = createChart('chart1M', l1, d1, [monthBoundaryPlugin]); // ← Monthlyに適用
-  chart6M = createChart('chart6M', l6, d6, [monthBoundaryPlugin]); // ← Monthlyに適用
-}
-
 async function fetchAllData(obsId) {
   const res = await fetch('/waterlevel?obsId=' + obsId + '&json=1');
   return await res.json();
@@ -225,7 +261,6 @@ obsSelect.addEventListener('change', async e => {
              json.m6.labels, json.m6.data);
 });
 </script>
-
 </body>
 </html>
 `;
@@ -235,6 +270,6 @@ module.exports = {
   getWaterLevel8h,
   getWaterLevel3d,
   getWeekData,
-  getAllWaterData,   // ← ここを追加
+  getAllWaterData,
   buildFiveChartHtml
 };
