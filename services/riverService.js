@@ -256,7 +256,7 @@ function createTimeChart(canvasId, labels, data) {
 function createChart(canvasId, labels, data, plugins = []) {
   return new Chart(document.getElementById(canvasId), {
     type: 'line',
-    data: { labels, datasets: [{ data, borderWidth: 1, tension: 0.2 }] },
+    data: { labels, datasets: [{ data, borderWidth: 2, tension: 0.2 }] },
     options: {
       responsive: true,
       maintainAspectRatio: false,
