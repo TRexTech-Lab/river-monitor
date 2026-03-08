@@ -196,8 +196,8 @@ function drawCharts(l8, d8, l3, d3, l7, d7, l1, d1, l6, d6) {
   chart8h = createChart('chart8h', l8, d8);
   chart3d = createChart('chart3d', l3, d3);
   chart7d = createChart('chart7d', l7, d7);
-  chart1M = createChart('chart1M', l1, d1);
-  chart6M = createChart('chart6M', l6, d6);
+  chart1M = createChart('chart1M', l1, d1, [monthBoundaryPlugin]); // ← Monthlyに適用
+  chart6M = createChart('chart6M', l6, d6, [monthBoundaryPlugin]); // ← Monthlyに適用
 }
 
 async function fetchAllData(obsId) {
