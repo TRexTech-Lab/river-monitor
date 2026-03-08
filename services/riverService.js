@@ -104,6 +104,13 @@ async function getWeekData(obsId) {
   return sortAndFormat(allValues, false);
 }
 
+async function getAllWaterData(obsId) {
+  const h8 = await getWaterLevel8h(obsId);
+  const d3 = await getWaterLevel3d(obsId);
+  const d7 = await getWeekData(obsId);
+  return { h8, d3, d7 };
+}
+
 // --- 共通整形 ---
 function sortAndFormat(values, isSixMonth) {
   const sorted = [...values].sort((a, b) => {
@@ -228,5 +235,6 @@ module.exports = {
   getWaterLevel8h,
   getWaterLevel3d,
   getWeekData,
+  getAllWaterData,   // ← ここを追加
   buildFiveChartHtml
 };
