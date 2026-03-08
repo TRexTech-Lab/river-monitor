@@ -230,17 +230,15 @@ async function getAllWaterData(obsId){
 
   const currentTime = await getCurrentTime();
 
-  const [h8,d3,d7,m1,m6] = await Promise.all([
+  const [h8,d3,d7] = await Promise.all([
 
     getWaterLevel8h(obsId,currentTime),
     getWaterLevel3d(obsId,currentTime),
     getWeekData(obsId),
-    getMonthData(obsId),
-    getSixMonthData(obsId)
 
   ]);
 
-  return {h8,d3,d7,m1,m6};
+  return {h8,d3,d7};
 
 }
 
