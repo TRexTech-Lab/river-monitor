@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 
 const riverService = require("../services/riverService");
-const { getMonthDataFromDB, getSixMonthDataFromDB } = require("../services/supabaseService");
+const { getMonthDataFromDB, getSixMonthDataFromDB } =
+  require("../services/supabaseService");
 
 router.get("/health", (req, res) => {
   res.json({ status: "ok" });
@@ -14,8 +15,11 @@ router.get("/waterlevel", async (req, res) => {
 
   try {
 
-    const { h8, d3, d7, m1, m6 } =
+    const { h8, d3, d7 } =
       await riverService.getAllWaterData(obsId);
+
+    const m1 = await getMonthDataFromDB(obsId);
+    const m6 = await getSixMonthDataFromDB(obsId);
 
     if (req.query.json) {
       return res.json({ h8, d3, d7, m1, m6 });
