@@ -1,4 +1,3 @@
-// services/riverService.js
 const axios = require("axios");
 const obsPoints = require("./obsPoints");
 
@@ -24,94 +23,6 @@ function cutDate(label) {
   return String(label).substring(0, 10);
 }
 
-// --- 8h: 10分単位 ---
-async function getWaterLevel8h(obsId) {
-  if (!obsId) return { labels: [], data: [] };
-
-  try {
-    const currentTime = await getCurrentTime();
-    const date = currentTime.slice(0, 10).replaceAll("/", "");
-    const time = currentTime.slice(11, 16).replace(":", "");
-    const url = `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${obsId}.json`;
-
-    console.log("Fetching 8h URL:", url);
-
-    const res = await axios.get(url);
-    const raw = res.data.min10Values || [];
-
-    return {
-      labels: raw.map(v => v.obsTime).reverse(),
-      data: raw.map(v => normalizeStg(v)).reverse()
-    };
-  } catch (err) {
-    console.error("8h fetch error:", err.message);
-    return { labels: [], data: [] };
-  }
-}
-
-// --- 3d: 1時間単位 ---
-async function getWaterLevel3d(obsId) {
-  if (!obsId) return { labels: [], data: [] };
-
-  try {
-    const currentTime = await getCurrentTime();
-    const date = currentTime.slice(0, 10).replaceAll("/", "");
-    const time = currentTime.slice(11, 16).replace(":", "");
-    const url = `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${obsId}.json`;
-
-    console.log("Fetching 3d URL:", url);
-
-    const res = await axios.get(url);
-    const raw = res.data.hrValues || [];
-
-    return {
-      labels: raw.map(v => v.obsTime).reverse(),
-      data: raw.map(v => normalizeStg(v)).reverse()
-    };
-  } catch (err) {
-    console.error("3d fetch error:", err.message);
-    return { labels: [], data: [] };
-  }
-}
-
-// --- 過去7日 ---
-async function getWeekData(obsId) {
-  if (!obsId) return { labels: [], data: [] };
-
-  const today = new Date();
-  let allValues = [];
-
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    const dateStr = `${yyyy}${mm}${dd}`;
-
-    const url = `https://www.river.go.jp/kawabou/file/files/tmlist/past/stg/${dateStr}/${obsId}.json`;
-
-    try {
-      console.log("Fetching week URL:", url);
-      const res = await axios.get(url);
-      allValues.push(...(res.data.pastValues || []));
-    } catch (err) {
-      console.warn("Week data fetch error for URL:", url, err.message);
-    }
-  }
-
-  return sortAndFormat(allValues, false);
-}
-
-// --- 全部まとめて取得 ---
-async function getAllWaterData(obsId) {
-  const h8 = await getWaterLevel8h(obsId);
-  const d3 = await getWaterLevel3d(obsId);
-  const d7 = await getWeekData(obsId);
-  return { h8, d3, d7 };
-}
-
 // --- 共通整形 ---
 function sortAndFormat(values, isSixMonth) {
   const sorted = [...values].sort((a, b) => {
@@ -124,7 +35,7 @@ function sortAndFormat(values, isSixMonth) {
   const data = [];
 
   for (const v of sorted) {
-    if (!v.date) continue;
+    if (!v.date && !v.obs_time) continue;
 
     if (isSixMonth) {
       if (v.obs_time) labels.push(cutDate(v.obs_time));
@@ -138,63 +49,80 @@ function sortAndFormat(values, isSixMonth) {
   return { labels, data };
 }
 
-// --- Grid強調プラグイン（月別グラフ用） ---
-const monthBoundaryPlugin = {
-  id: 'monthBoundary',
-  afterDraw(chart) {
-    const { ctx, chartArea } = chart;
-    const labels = chart.data.labels;
-    if (!labels || labels.length === 0) return;
-
-    ctx.save();
-    ctx.strokeStyle = 'rgba(100,100,100,1)';
-    ctx.lineWidth = 1.5;
-
-    for (let i = 1; i < labels.length; i++) {
-      const prev = labels[i - 1];
-      const curr = labels[i];
-      if (!prev || !curr) continue;
-
-      const prevMonth = prev.slice(0, 7);
-      const currMonth = curr.slice(0, 7);
-
-      if (prevMonth !== currMonth) {
-        const x = chart.getDatasetMeta(0).data[i].x;
-        ctx.beginPath();
-        ctx.moveTo(x, chartArea.top);
-        ctx.lineTo(x, chartArea.bottom);
-        ctx.stroke();
-      }
-    }
-
-    ctx.restore();
+// --- 8h: 10分単位 ---
+async function getWaterLevel8h(obsId) {
+  if (!obsId) return { labels: [], data: [] };
+  try {
+    const currentTime = await getCurrentTime();
+    const date = currentTime.slice(0, 10).replaceAll("/", "");
+    const time = currentTime.slice(11, 16).replace(":", "");
+    const url = `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${obsId}.json`;
+    const res = await axios.get(url);
+    const raw = res.data.min10Values || [];
+    return { labels: raw.map(v => v.obsTime).reverse(), data: raw.map(v => normalizeStg(v)).reverse() };
+  } catch {
+    return { labels: [], data: [] };
   }
-};
-
-// --- Chart作成関数 ---
-function createChart(canvasId, labels, data, plugin = []) {
-  return new Chart(document.getElementById(canvasId), {
-    type: 'line',
-    data: { labels, datasets: [{ data, borderWidth: 2, tension: 0.2 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } },
-    plugins: plugin
-  });
 }
 
-function drawCharts(l8, d8, l3, d3, l7, d7, l1, d1, l6, d6) {
-  if (chart8h) chart8h.destroy();
-  if (chart3d) chart3d.destroy();
-  if (chart7d) chart7d.destroy();
-  if (chart1M) chart1M.destroy();
-  if (chart6M) chart6M.destroy();
+// --- 3d: 1時間単位 ---
+async function getWaterLevel3d(obsId) {
+  if (!obsId) return { labels: [], data: [] };
+  try {
+    const currentTime = await getCurrentTime();
+    const date = currentTime.slice(0, 10).replaceAll("/", "");
+    const time = currentTime.slice(11, 16).replace(":", "");
+    const url = `https://www.river.go.jp/kawabou/file/files/tmlist/stg/${date}/${time}/${obsId}.json`;
+    const res = await axios.get(url);
+    const raw = res.data.hrValues || [];
+    return { labels: raw.map(v => v.obsTime).reverse(), data: raw.map(v => normalizeStg(v)).reverse() };
+  } catch {
+    return { labels: [], data: [] };
+  }
+}
 
-  chart8h = createChart('chart8h', l8, d8);
-  chart3d = createChart('chart3d', l3, d3);
-  chart7d = createChart('chart7d', l7, d7);
+// --- 過去7日 ---
+async function getWeekData(obsId) {
+  if (!obsId) return { labels: [], data: [] };
+  const today = new Date();
+  let allValues = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    const dateStr = `${yyyy}${mm}${dd}`;
+    const url = `https://www.river.go.jp/kawabou/file/files/tmlist/past/stg/${dateStr}/${obsId}.json`;
+    try {
+      const res = await axios.get(url);
+      allValues.push(...(res.data.pastValues || []));
+    } catch {}
+  }
+  return sortAndFormat(allValues, false);
+}
 
-  // Monthlyグラフだけplugin適用
-  chart1M = createChart('chart1M', l1, d1, [monthBoundaryPlugin]);
-  chart6M = createChart('chart6M', l6, d6, [monthBoundaryPlugin]);
+// --- 全データ取得（Monthly用も作る） ---
+async function getAllWaterData(obsId) {
+  const h8 = await getWaterLevel8h(obsId);
+  const d3 = await getWaterLevel3d(obsId);
+  const d7 = await getWeekData(obsId);
+
+  // Monthlyサンプルデータ（実データが必要ならここを変更）
+  const today = new Date();
+  const m1Values = [];
+  const m6Values = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(today);
+    d.setMonth(today.getMonth() - i);
+    const label = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+    m6Values.push({ obs_time: label, stg: Math.random() * 5 + 1 });
+    if (i === 0) m1Values.push({ obs_time: label, stg: Math.random() * 5 + 1 });
+  }
+  const m1 = sortAndFormat(m1Values, true);
+  const m6 = sortAndFormat(m6Values, true);
+
+  return { h8, d3, d7, m1, m6 };
 }
 
 // --- HTML生成 ---
@@ -236,30 +164,61 @@ select { font-size: 16px; margin: 10px; }
 <script>
 let chart8h, chart3d, chart7d, chart1M, chart6M;
 
-async function fetchAllData(obsId) {
+const monthBoundaryPlugin = {
+  id: 'monthBoundary',
+  afterDraw(chart) {
+    const { ctx, chartArea } = chart;
+    const labels = chart.data.labels;
+    if (!labels || labels.length === 0) return;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(100,100,100,1)';
+    ctx.lineWidth = 1.5;
+    for (let i = 1; i < labels.length; i++) {
+      const prev = labels[i-1], curr = labels[i];
+      if (!prev || !curr) continue;
+      if (prev.slice(0,7) !== curr.slice(0,7)) {
+        const x = chart.getDatasetMeta(0).data[i].x;
+        ctx.beginPath(); ctx.moveTo(x, chartArea.top); ctx.lineTo(x, chartArea.bottom); ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+};
+
+function createChart(canvasId, labels, data, plugins = []) {
+  return new Chart(document.getElementById(canvasId), {
+    type: 'line',
+    data: { labels, datasets: [{ data, borderWidth: 2, tension: 0.2 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } },
+    plugins
+  });
+}
+
+async function fetchAndDraw(obsId) {
   const res = await fetch('/waterlevel?obsId=' + obsId + '&json=1');
-  return await res.json();
+  const json = await res.json();
+  if(chart8h) chart8h.destroy();
+  if(chart3d) chart3d.destroy();
+  if(chart7d) chart7d.destroy();
+  if(chart1M) chart1M.destroy();
+  if(chart6M) chart6M.destroy();
+  chart8h = createChart('chart8h', json.h8.labels, json.h8.data);
+  chart3d = createChart('chart3d', json.d3.labels, json.d3.data);
+  chart7d = createChart('chart7d', json.d7.labels, json.d7.data);
+  chart1M = createChart('chart1M', json.m1.labels, json.m1.data, [monthBoundaryPlugin]);
+  chart6M = createChart('chart6M', json.m6.labels, json.m6.data, [monthBoundaryPlugin]);
 }
 
 const obsSelect = document.getElementById('obsSelect');
 const savedObsId = localStorage.getItem('selectedObsId');
 const initialObsId = savedObsId || obsSelect.value;
 obsSelect.value = initialObsId;
-
-fetchAllData(initialObsId).then(json => {
-  drawCharts(json.h8.labels, json.h8.data, json.d3.labels, json.d3.data,
-             json.d7.labels, json.d7.data, json.m1.labels, json.m1.data,
-             json.m6.labels, json.m6.data);
+fetchAndDraw(initialObsId);
+obsSelect.addEventListener('change', e => {
+  localStorage.setItem('selectedObsId', e.target.value);
+  fetchAndDraw(e.target.value);
 });
 
-obsSelect.addEventListener('change', async e => {
-  const obsId = e.target.value;
-  localStorage.setItem('selectedObsId', obsId);
-  const json = await fetchAllData(obsId);
-  drawCharts(json.h8.labels, json.h8.data, json.d3.labels, json.d3.data,
-             json.d7.labels, json.d7.data, json.m1.labels, json.m1.data,
-             json.m6.labels, json.m6.data);
-});
 </script>
 </body>
 </html>
