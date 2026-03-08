@@ -210,8 +210,8 @@ async function fetchAndDraw(obsId) {
   const m1Labels = json.m1.labels.map(l => l.slice(0,10));
   const m6Labels = json.m6.labels.map(l => l.slice(0,10));
   
-  chart1M = createChart('chart1M', json.m1.labels, json.m1.data, [monthBoundaryPlugin]);
-  chart6M = createChart('chart6M', json.m6.labels, json.m6.data, [monthBoundaryPlugin]);
+  chart1M = createChart('chart1M', m1Labels, json.m1.data, [monthBoundaryPlugin]);
+  chart6M = createChart('chart6M', m6Labels, json.m6.data, [monthBoundaryPlugin]);
 }
 
 const obsSelect = document.getElementById('obsSelect');
@@ -220,8 +220,8 @@ const initialObsId = savedObsId || obsSelect.value;
 obsSelect.value = initialObsId;
 fetchAndDraw(initialObsId);
 obsSelect.addEventListener('change', e => {
-  localStorage.setItem('selectedObsId', e.target.value);
-  fetchAndDraw(e.target.value);
+    localStorage.setItem('selectedObsId', e.target.value);
+    fetchAndDraw(e.target.value);
 });
 
 </script>
