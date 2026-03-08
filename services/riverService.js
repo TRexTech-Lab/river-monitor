@@ -243,5 +243,6 @@ async function getAllWaterData(obsId){
 }
 
 module.exports={
-  getAllWaterData
+  getAllWaterData,
+  buildFiveChartHtml
 };
