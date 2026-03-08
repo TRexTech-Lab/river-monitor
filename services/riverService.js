@@ -164,54 +164,101 @@ select { font-size: 16px; margin: 10px; }
 <script>
 let chart8h, chart3d, chart7d, chart1M, chart6M;
 
-const monthBoundaryPlugin = {
-  id: 'monthBoundary',
+// --- 共通 Grid 強調プラグイン ---
+const highlightGridPlugin = {
+  id: 'highlightGrid',
   afterDraw(chart) {
-    const { ctx, chartArea } = chart;
-    const labels = chart.data.labels;
+    const { ctx, chartArea, data } = chart;
+    const labels = data.labels;
     if (!labels || labels.length === 0) return;
+
     ctx.save();
-    ctx.strokeStyle = 'rgba(100,100,100,1)';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(100,100,100,0.2)';
+    ctx.lineWidth = 1;
+
     for (let i = 1; i < labels.length; i++) {
-      const prev = labels[i-1], curr = labels[i];
+      const prev = labels[i - 1];
+      const curr = labels[i];
       if (!prev || !curr) continue;
-      if (prev.slice(0,7) !== curr.slice(0,7)) {
+
+      let drawStrong = false;
+
+      // 日またぎ or 月初 or 時間が00:00
+      const prevDate = prev.split(" ")[0] || prev;
+      const currDate = curr.split(" ")[0] || curr;
+      const prevMonth = prevDate.slice(0,7);
+      const currMonth = currDate.slice(0,7);
+      const prevTime = (prev.split(" ")[1] || "");
+      const currTime = (curr.split(" ")[1] || "");
+
+      if (prevDate !== currDate) drawStrong = true;      // 日またぎ
+      if (prevMonth !== currMonth) drawStrong = true;    // 月またぎ
+      if (currTime === "00:00") drawStrong = true;       // 時間が00:00
+
+      if (drawStrong) {
         const x = chart.getDatasetMeta(0).data[i].x;
-        ctx.beginPath(); ctx.moveTo(x, chartArea.top); ctx.lineTo(x, chartArea.bottom); ctx.stroke();
+        ctx.strokeStyle = 'rgba(100,100,100,1)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x, chartArea.top);
+        ctx.lineTo(x, chartArea.bottom);
+        ctx.stroke();
       }
     }
+
     ctx.restore();
   }
 };
 
+// --- 時間系グラフ作成関数 ---
+function createTimeChart(canvasId, labels, data) {
+  return new Chart(document.getElementById(canvasId), {
+    type: 'line',
+    data: { labels, datasets: [{ data, borderWidth: 2, tension: 0.2 }] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } }
+    },
+    plugins: [highlightGridPlugin]
+  });
+}
+
+// --- 通常グラフ作成関数 ---
 function createChart(canvasId, labels, data, plugins = []) {
   return new Chart(document.getElementById(canvasId), {
     type: 'line',
     data: { labels, datasets: [{ data, borderWidth: 2, tension: 0.2 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } },
-    plugins
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } }
+    },
+    plugins: plugins.concat([highlightGridPlugin]) // 必要に応じて月も強調
   });
 }
 
+// --- fetchAndDraw 修正版 ---
 async function fetchAndDraw(obsId) {
   const res = await fetch('/waterlevel?obsId=' + obsId + '&json=1');
   const json = await res.json();
+
   if(chart8h) chart8h.destroy();
   if(chart3d) chart3d.destroy();
   if(chart7d) chart7d.destroy();
   if(chart1M) chart1M.destroy();
   if(chart6M) chart6M.destroy();
-  chart8h = createChart('chart8h', json.h8.labels, json.h8.data);
-  chart3d = createChart('chart3d', json.d3.labels, json.d3.data);
+
+  // 時間系グラフ
+  chart8h = createTimeChart('chart8h', json.h8.labels, json.h8.data);
+  chart3d = createTimeChart('chart3d', json.d3.labels, json.d3.data);
   chart7d = createChart('chart7d', json.d7.labels, json.d7.data);
 
-  // Monthlyグラフはラベルを日付だけにカット
+  // Monthlyは日付だけにして plugin 適用
   const m1Labels = json.m1.labels.map(l => l.slice(0,10));
   const m6Labels = json.m6.labels.map(l => l.slice(0,10));
-  
-  chart1M = createChart('chart1M', m1Labels, json.m1.data, [monthBoundaryPlugin]);
-  chart6M = createChart('chart6M', m6Labels, json.m6.data, [monthBoundaryPlugin]);
+  chart1M = createChart('chart1M', m1Labels, json.m1.data);
+  chart6M = createChart('chart6M', m6Labels, json.m6.data);
 }
 
 const obsSelect = document.getElementById('obsSelect');
