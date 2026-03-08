@@ -9,14 +9,13 @@ router.get("/health", (req, res) => {
 });
 
 router.get("/waterlevel", async (req, res) => {
+
   const obsId = req.query.obsId || "2155500400010";
 
   try {
-    const h8 = await riverService.getWaterLevel8h(obsId);
-    const d3 = await riverService.getWaterLevel3d(obsId);
-    const d7 = await riverService.getWeekData(obsId);
-    const m1 = await getMonthDataFromDB(obsId);
-    const m6 = await getSixMonthDataFromDB(obsId);
+
+    const { h8, d3, d7, m1, m6 } =
+      await riverService.getAllWaterData(obsId);
 
     if (req.query.json) {
       return res.json({ h8, d3, d7, m1, m6 });
@@ -34,9 +33,12 @@ router.get("/waterlevel", async (req, res) => {
     );
 
   } catch (err) {
+
     console.error("waterlevel route error:", err);
     res.status(500).send("Error fetching water level data");
+
   }
+
 });
 
 module.exports = router;
