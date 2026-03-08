@@ -205,6 +205,11 @@ async function fetchAndDraw(obsId) {
   chart8h = createChart('chart8h', json.h8.labels, json.h8.data);
   chart3d = createChart('chart3d', json.d3.labels, json.d3.data);
   chart7d = createChart('chart7d', json.d7.labels, json.d7.data);
+
+  // Monthlyグラフはラベルを日付だけにカット
+  const m1Labels = json.m1.labels.map(l => l.slice(0,10));
+  const m6Labels = json.m6.labels.map(l => l.slice(0,10));
+  
   chart1M = createChart('chart1M', json.m1.labels, json.m1.data, [monthBoundaryPlugin]);
   chart6M = createChart('chart6M', json.m6.labels, json.m6.data, [monthBoundaryPlugin]);
 }
