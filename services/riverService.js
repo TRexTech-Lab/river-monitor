@@ -262,7 +262,7 @@ function createChart(canvasId, labels, data, plugins = []) {
       maintainAspectRatio: false,
       plugins: { legend: { display: false } }
     },
-    plugins: plugins.concat([highlightGridPlugin]) // 必要に応じて月も強調
+    plugins: plugins
   });
 }
 
@@ -280,7 +280,7 @@ async function fetchAndDraw(obsId) {
   // 時間系グラフ
   chart8h = createTimeChart('chart8h', json.h8.labels, json.h8.data);
   chart3d = createTimeChart('chart3d', json.d3.labels, json.d3.data);
-  chart7d = createChart('chart7d', json.d7.labels, json.d7.data);
+  chart7d = createChart('chart7d', json.d7.labels, json.d7.data, [highlightGridPlugin]);
 
   // Monthlyは日付だけにして plugin 適用
   const m1Labels = json.m1.labels.map(l => l.slice(0,10));
