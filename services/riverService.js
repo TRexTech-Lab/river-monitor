@@ -210,7 +210,7 @@ const highlightGridPlugin = {
   }
 };
 
-// --- 2週間専用プラグイン（週境目だけ強調） ---
+// --- 2週間グラフ用 日曜強調プラグイン ---
 const highlightWeekPlugin = {
   id: 'highlightWeek',
   afterDraw(chart) {
@@ -222,15 +222,10 @@ const highlightWeekPlugin = {
     ctx.strokeStyle = 'rgba(100,100,100,1)';
     ctx.lineWidth = 1.5;
 
-    for (let i = 1; i < labels.length; i++) {
-      const prevDate = new Date(labels[i-1].split(" ")[0] || labels[i-1]);
-      const currDate = new Date(labels[i].split(" ")[0] || labels[i]);
-      
-      // 週番号を取得
-      const prevWeek = getWeekNumber(prevDate);
-      const currWeek = getWeekNumber(currDate);
-
-      if (prevWeek !== currWeek) {
+    for (let i = 0; i < labels.length; i++) {
+      const dateStr = labels[i].split(" ")[0]; // YYYY-MM-DD
+      const d = new Date(dateStr);
+      if (d.getDay() === 0) { // 日曜日
         const x = chart.getDatasetMeta(0).data[i].x;
         ctx.beginPath();
         ctx.moveTo(x, chartArea.top);
@@ -242,15 +237,6 @@ const highlightWeekPlugin = {
     ctx.restore();
   }
 };
-
-// --- 日付から週番号を取得（ISO 8601準拠: 月曜始まり） ---
-function getWeekNumber(d) {
-  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  const dayNum = date.getUTCDay() || 7; // 日曜は7
-  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
-  return Math.ceil((((date - yearStart) / 86400000) + 1)/7);
-}
 
 // --- Monthly専用プラグイン（月境目だけ強調） ---
 const highlightMonthPlugin = {
