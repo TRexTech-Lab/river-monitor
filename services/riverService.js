@@ -247,9 +247,9 @@ function createMonthlyChart(canvasId, labels, data){
             color:function(ctx){
               const i = ctx.index;
 
-              if(i === 0){
-                return 'rgba(100,100,200,1.0)';
-              }
+             // if(i === 0){
+             //   return 'rgba(100,100,200,1.0)';
+             // }
 
               const prev = labels[i-1];
               const curr = labels[i];
@@ -271,9 +271,9 @@ function createMonthlyChart(canvasId, labels, data){
             lineWidth:function(ctx){
               const i = ctx.index;
 
-              if(i === 0){
-                return 2;
-              }
+              //if(i === 0){
+              //  return 2;
+              //}
 
               const prev = labels[i-1];
               const curr = labels[i];
