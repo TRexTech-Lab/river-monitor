@@ -133,6 +133,45 @@ select{font-size:16px;margin:10px;}
 <h2>${title6M}</h2><div class="chart-container"><canvas id="chart6M"></canvas></div>
 
 <script>
+
+const monthBoundaryPlugin = {
+  id: 'monthBoundary',
+
+  afterDraw(chart) {
+    const {ctx, chartArea, scales} = chart;
+    const labels = chart.data.labels;
+
+    if (!labels || labels.length === 0) return;
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(100,100,200,1)';
+    ctx.lineWidth = 2;
+
+    for (let i = 1; i < labels.length; i++) {
+
+      const prev = labels[i-1];
+      const curr = labels[i];
+
+      if (!prev || !curr) continue;
+
+      const prevMonth = prev.slice(0,7);
+      const currMonth = curr.slice(0,7);
+
+      if (prevMonth !== currMonth) {
+
+        const x = scales.x.getPixelForValue(i);
+
+        ctx.beginPath();
+        ctx.moveTo(x, chartArea.top);
+        ctx.lineTo(x, chartArea.bottom);
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore();
+  }
+};
+
 let chart8h, chart3d, chart7d, chart1M, chart6M;
 
 function createChart(canvasId, labels, data){
@@ -194,10 +233,14 @@ function createMonthlyChart(canvasId, labels, data){
   return new Chart(document.getElementById(canvasId),{
     type:'line',
     data:{labels,datasets:[{data,borderWidth:2,tension:0.2}]},
+    plugins:[monthBoundaryPlugin],
     options:{
       responsive:true,
       maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
+      plugins:{
+        legend:{display:false},
+        monthBoundary:{}
+      },
       scales:{
         x:{
           grid:{
