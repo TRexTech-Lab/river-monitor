@@ -203,17 +203,20 @@ function createMonthlyChart(canvasId, labels, data){
           grid:{
             color:function(ctx){
               const i = ctx.index;
-              const label = ctx.tick.label;
 
               if(i === 0){
                 return 'rgba(100,100,200,1.0)';
               }
 
-              const prev = ctx.chart.scales.x.ticks[i-1]?.label;
-              if(!prev) return 'rbga(100,100,200,0.2)';
-              
+              const prev = labels[i-1];
+              const curr = labels[i];
+
+              if(!prev || !curr){
+                return 'rgba(100,100,200,0.2)';
+              }
+
               const prevMonth = prev.slice(0,7);
-              const currMonth = label.slice(0,7);
+              const currMonth = curr.slice(0,7);
 
               if(prevMonth !== currMonth){
                 return 'rgba(100,100,200,1.0)';
@@ -224,17 +227,20 @@ function createMonthlyChart(canvasId, labels, data){
 
             lineWidth:function(ctx){
               const i = ctx.index;
-              const label = ctx.tick.label;
 
               if(i === 0){
                 return 2;
               }
 
-              const prev = ctx.chart.scales.x.ticks[i-1]?.label;
-              if(!prev) return 1;
+              const prev = labels[i-1];
+              const curr = labels[i];
+
+              if(!prev || !curr){
+                return 1;
+              }
 
               const prevMonth = prev.slice(0,7);
-              const currMonth = label.slice(0,7);
+              const currMonth = curr.slice(0,7);
 
               if(prevMonth !== currMonth){
                 return 2;
