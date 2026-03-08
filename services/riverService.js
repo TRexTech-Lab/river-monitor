@@ -144,7 +144,7 @@ const monthBoundaryPlugin = {
     if (!labels || labels.length === 0) return;
 
     ctx.save();
-    ctx.strokeStyle = 'rgba(100,100,200,1)';
+    ctx.strokeStyle = 'rgba(100,100,100,1)';
     ctx.lineWidth = 2;
 
     for (let i = 1; i < labels.length; i++) {
@@ -198,15 +198,15 @@ function createTimeChart(canvasId, labels, data) {
               const i = ctx.index;
               const label = labels[i];
               
-              if (!label) return 'rgba(100,100,200,0.2)';
+              if (!label) return 'rgba(100,100,100,0.2)';
               
               const day = label.slice(0, 10); // YYYY-MM-DD部分
               const time = label.split(" ")[1];
               
               if (time === "00:00") {
-                return 'rgba(100,100,200,1.0)';
+                return 'rgba(100,100,100,1.0)';
               }
-              return 'rgba(100,100,200,0.2)';
+              return 'rgba(100,100,100,0.2)';
             },
             
             lineWidth: function(ctx) {
@@ -238,59 +238,13 @@ function createMonthlyChart(canvasId, labels, data){
       responsive:true,
       maintainAspectRatio:false,
       plugins:{
-        legend:{display:false},
-        monthBoundary:{}
+        legend:{display:false}
       },
       scales:{
         x:{
           grid:{
-            color:function(ctx){
-              const i = ctx.index;
-
-             // if(i === 0){
-             //   return 'rgba(100,100,200,1.0)';
-             // }
-
-              const prev = labels[i-1];
-              const curr = labels[i];
-
-              if(!prev || !curr){
-                return 'rgba(100,100,200,0.2)';
-              }
-
-              const prevMonth = prev.slice(0,7);
-              const currMonth = curr.slice(0,7);
-
-              if(prevMonth !== currMonth){
-                return 'rgba(100,100,200,1.0)';
-              }
-
-              return 'rgba(100,100,200,0.2)';
-            },
-
-            lineWidth:function(ctx){
-              const i = ctx.index;
-
-              //if(i === 0){
-              //  return 2;
-              //}
-
-              const prev = labels[i-1];
-              const curr = labels[i];
-
-              if(!prev || !curr){
-                return 1;
-              }
-
-              const prevMonth = prev.slice(0,7);
-              const currMonth = curr.slice(0,7);
-
-              if(prevMonth !== currMonth){
-                return 2;
-              }
-
-              return 1;
-            }
+            color:'rgba(100,100,100,0.2)',
+            lineWidth:1
           }
         }
       }
